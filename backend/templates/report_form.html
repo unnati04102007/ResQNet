@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>🆘 File a Disaster Report</h2>
+  <form method="POST">
+    <div class="mb-3">
+      <label>Title</label>
+      <input type="text" class="form-control" name="title" required>
+    </div>
+    <div class="mb-3">
+      <label>Description</label>
+      <textarea class="form-control" name="description" rows="4" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-danger">Submit Report</button>
+  </form>
+{% endblock %}
