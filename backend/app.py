@@ -1,6 +1,5 @@
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, g
-from werkzeug.security import generate_password_hash, check_password_hash  # ✅ secure password handling
 
 app = Flask(__name__)
 DATABASE = "../database/resqnet.db"   # database file path
@@ -28,66 +27,65 @@ def init_db():
         db.commit()
 
 # -------------------
-# Routes
+# Routes 
 # -------------------
 
 @app.route("/")
 def home():
     return render_template("home.html")
 
-# -------------------
-# LOGIN
-# -------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = request.form.get("username").strip()
+        password = request.form.get("password").strip()
+
+        # 🔍 Debug prints
+        print("🔍 Input:", username, password)
 
         db = get_db()
         cursor = db.cursor()
-
-        # ✅ fetch stored hashed password for this user
-        cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+        cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
         user = cursor.fetchone()
 
-        if user and check_password_hash(user[0], password):  
-            # ✅ verify entered password with stored hash
+        # 🔍 Debug result
+        print("🔍 Query Result:", user)
+
+        if user:
             return f"✅ Welcome back, {username}!"
         else:
             return "❌ Invalid username or password."
     return render_template("login.html")
 
-# -------------------
-# REGISTER
-# -------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
 
-        # ✅ hash password before saving
-        hashed_pw = generate_password_hash(password)
+        if password != confirm_password:
+            return "❌ Passwords do not match!"
 
         db = get_db()
         cursor = db.cursor()
-        try:
-            cursor.execute(
-                "INSERT INTO users (username, email, password) VALUES (?, ?, ?)", 
-                (username, email, hashed_pw)
-            )
-            db.commit()
-            return redirect(url_for("login"))
-        except sqlite3.IntegrityError:
+
+        cursor.execute("SELECT * FROM users WHERE username=? OR email=?", (username, email))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
             return "❌ Username or Email already exists!"
+
+        cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                       (username, email, password))
+        db.commit()
+
+        return redirect(url_for("login"))
+
     return render_template("register.html")
 
-# -------------------
-# MAIN
-# -------------------
-if __name__ == "__main__":
-    # init_db()   # disable just for testing
-    app.run(debug=True)
 
+if __name__ == "__main__":
+    #init_db()   # create tables if not exists
+    app.run(debug=True)
