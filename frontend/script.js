@@ -1,6 +1,5 @@
 
 // DOM READY
-// ===============================
 document.addEventListener("DOMContentLoaded", () => {
 
   
@@ -25,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Navigation click handling
   navLinks.forEach(link => {
     link.addEventListener("click", e => {
-      e.prevengit add frontend/index.htmltDefault();
+      e.preventDefault();
       const targetId = link.getAttribute("href").substring(1);
       showPage(targetId);
     });
@@ -45,9 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===============================
   // Multilingual Toggle 🌐
-  // ===============================
   const langToggle = document.getElementById("langToggle");
   let currentLang = "en";
 
@@ -107,9 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===============================
   // Form Handling (Simulation)
-  // ===============================
   const registerForm = document.getElementById("registerForm");
   if (registerForm) {
     registerForm.addEventListener("submit", e => {
