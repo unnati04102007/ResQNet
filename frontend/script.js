@@ -1,44 +1,11 @@
-<<<<<<< HEAD
-// Page Navigation
-function showPage(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
-  closeMenu();
-}
 
-// Language Toggle
-let currentLang = 'en';
-function toggleLanguage() {
-  currentLang = currentLang === 'en' ? 'hi' : 'en';
-  document.getElementById("langBtn").innerText = currentLang === 'en' ? "🌍 EN" : "🌍 HI";
-  document.querySelectorAll('[data-en]').forEach(el => {
-    el.textContent = el.getAttribute(`data-${currentLang}`);
-  });
-}
-
-// Dark Mode Toggle
-function toggleTheme() {
-  document.body.classList.toggle("dark");
-  document.getElementById("themeBtn").innerText = 
-    document.body.classList.contains("dark") ? "☀️" : "🌙";
-}
-
-// Mobile Menu Toggle
-function toggleMenu() {
-  document.getElementById("navMenu").classList.toggle("show");
-}
-function closeMenu() {
-  document.getElementById("navMenu").classList.remove("show");
-}
-=======
-// ===============================
 // DOM READY
 // ===============================
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ===============================
+  
   // Navigation (SPA-like behavior)
-  // ===============================
+
   const navLinks = document.querySelectorAll(".nav-links a");
   const pages = document.querySelectorAll(".page");
 
@@ -58,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Navigation click handling
   navLinks.forEach(link => {
     link.addEventListener("click", e => {
-      e.preventDefault();
+      e.prevengit add frontend/index.htmltDefault();
       const targetId = link.getAttribute("href").substring(1);
       showPage(targetId);
     });
@@ -67,9 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Default: show Home page
   showPage("home");
 
-  // ===============================
+
   // Dark Mode Toggle 🌙/☀
-  // ===============================
+
   const darkToggle = document.getElementById("darkToggle");
   if (darkToggle) {
     darkToggle.addEventListener("click", () => {
@@ -160,4 +127,3 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 });
->>>>>>> 5b60f46890df619482c3f4e7eecae82ae9792459
