@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ResQNet - Disaster Management</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <header>
+    <h1>🌐 ResQNet</h1>
+    <nav id="navMenu">
+      <button onclick="showPage('home')">Home</button>
+      <button onclick="showPage('dashboard')">Dashboard</button>
+      <button onclick="showPage('report')">Report Disaster</button>
+      <button onclick="showPage('donation')">Donation</button>
+      <button onclick="showPage('feedback')">Feedback</button>
+      <button onclick="showPage('register')">Register</button>
+      <button onclick="showPage('login')">Login</button>
+    </nav>
+
+    <div class="controls">
+      <button id="langBtn" onclick="toggleLanguage()">🌍 EN</button>
+      <button id="themeBtn" onclick="toggleTheme()">🌙</button>
+      <button id="menuToggle" onclick="toggleMenu()">☰</button>
+    </div>
+  </header>
+
+  <!-- Pages -->
+  <main>
+    <!-- Home -->
+    <section id="home" class="page active">
+      <h2 data-en="Welcome to ResQNet" data-hi="ResQNet में आपका स्वागत है">Welcome to ResQNet</h2>
+      <p data-en="AI-powered disaster management system." 
+         data-hi="एआई संचालित आपदा प्रबंधन प्रणाली।">
+         AI-powered disaster management system.
+      </p>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" class="page">
+      <h2 data-en="Dashboard" data-hi="डैशबोर्ड">Dashboard</h2>
+      <p data-en="User-specific information will appear here." 
+         data-hi="यहां उपयोगकर्ता से संबंधित जानकारी दिखाई देगी।">
+         User-specific information will appear here.
+      </p>
+    </section>
+
+    <!-- Disaster Report -->
+    <section id="report" class="page">
+      <h2 data-en="Disaster Report Form" data-hi="आपदा रिपोर्ट फॉर्म">Disaster Report Form</h2>
+      <form>
+        <input type="text" placeholder="Your Name">
+        <input type="text" placeholder="Location">
+        <textarea placeholder="Describe the disaster"></textarea>
+        <button type="button">Submit Report (Placeholder)</button>
+      </form>
+    </section>
+
+    <!-- Donation -->
+    <section id="donation" class="page">
+      <h2 data-en="Donation Page" data-hi="दान पृष्ठ">Donation Page</h2>
+      <p data-en="Donation functionality will be integrated here." 
+         data-hi="दान की सुविधा यहां जोड़ी जाएगी।">
+         Donation functionality will be integrated here.
+      </p>
+      <button>Donate Now (Placeholder)</button>
+    </section>
+
+    <!-- Feedback -->
+    <section id="feedback" class="page">
+      <h2 data-en="Feedback" data-hi="प्रतिक्रिया">Feedback</h2>
+      <textarea placeholder="Enter your feedback"></textarea>
+      <button>Submit Feedback (Placeholder)</button>
+    </section>
+
+    <!-- Registration -->
+    <section id="register" class="page">
+      <h2 data-en="Registration Portal" data-hi="पंजीकरण पोर्टल">Registration Portal</h2>
+      <form>
+        <input type="text" placeholder="Full Name">
+        <input type="email" placeholder="Email">
+        <input type="password" placeholder="Password">
+        <button type="button">Register (Placeholder)</button>
+      </form>
+    </section>
+
+    <!-- Login -->
+    <section id="login" class="page">
+      <h2 data-en="Login Page" data-hi="लॉगिन पृष्ठ">Login Page</h2>
+      <form>
+        <input type="email" placeholder="Email">
+        <input type="password" placeholder="Password">
+        <button type="button">Login (Placeholder)</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 ResQNet | Disaster Management System</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

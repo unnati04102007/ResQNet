@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS donations (
 
 -- Users
 INSERT OR REPLACE INTO users (username, email, password, role) VALUES
-('alice', 'alice@example.com', '1234', 'citizen'),
+('unnati', 'alice@example.com', '1234', 'citizen'),
 ('bob', 'bob@example.com', '1234', 'volunteer'),
 ('charlie', 'charlie@example.com', '1234', 'admin');
 
