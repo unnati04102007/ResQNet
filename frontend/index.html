@@ -4,82 +4,211 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ResQNet</title>
-  <link rel="stylesheet" href="style.css">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9f9f9;
+    }
+
+    /* Pages */
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn 0.8s; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Navbar */
+    .navbar-brand { font-weight: bold; }
+
+    /* Hero Banners */
+    .hero-banner, .report-hero, .donation-hero, .contact-hero {
+      background: url("https://source.unsplash.com/1600x500/?disaster,help") center/cover no-repeat;
+      color: white;
+      text-align: center;
+      padding: 100px 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    .hero-banner .overlay,
+    .report-hero .overlay,
+    .donation-hero .overlay,
+    .contact-hero .overlay {
+      background: rgba(0,0,0,0.6);
+      padding: 50px;
+      border-radius: 10px;
+    }
+
+    /* Buttons */
+    .btn-animated {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      transition: transform 0.2s;
+    }
+    .btn-animated:hover {
+      transform: scale(1.05);
+      background: #0056b3;
+    }
+
+    /* Cards */
+    .card { border: none; border-radius: 10px; }
+
+    footer {
+      background: #212529;
+      color: #fff;
+      text-align: center;
+      padding: 15px 0;
+      margin-top: 50px;
+    }
+  </style>
 </head>
-
-
 <body>
-  
-</script>
 
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="logo">ResQNet</div>
-    <ul class="nav-links">
-      <li><a href="#home" class="active">Home</a></li>
-      <li><a href="#report">Report</a></li>
-      <li><a href="#donation">Donation</a></li>
-      <li><a href="#register">Register</a></li>
-      <li><a href="#login">Login</a></li>
-      <li><a href="#contact">Contact Us</a></li>
-    </ul>
-    <div class="controls">
-      <button id="darkToggle">🌙</button>
-      <button id="langToggle">🌐</button>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="#" onclick="showPage('home')">ResQNet</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link active" href="#" onclick="showPage('home')">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('report')">Report</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('donation')">Donation</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('register')">Register</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('login')">Login</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('contact')">Contact</a></li>
+        </ul>
+      </div>
     </div>
   </nav>
 
   <!-- Pages -->
-  <main>
-    
+  <main class="container my-5">
+
     <!-- Home -->
     <section id="home" class="page active">
-      <!-- Emergency Alert -->
-      <div class="alert-box">
-        <p><strong>🚨 Emergency Alert:</strong> Placeholder for urgent updates or warnings.</p>
+      <div class="hero-banner animate__animated animate__fadeInDown">
+        <div class="overlay">
+          <h1>🌐 ResQNet</h1>
+          <p>AI-powered Disaster Management System</p>
+          <a href="#" class="btn btn-danger btn-lg" onclick="showPage('report')">Report Now</a>
+        </div>
       </div>
 
-      <!-- Main Content -->
-      <div class="home-container">
-        <!-- About Section -->
-        <div class="about">
-          <h2>About ResQNet</h2>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-            ResQNet is a next-generation disaster management system designed to 
-            help communities prepare for, respond to, and recover from emergencies. 
-            (Placeholder — replace with real details later).
-          </p>
+      <div class="alert alert-danger text-center animate__animated animate__shakeX">
+        🚨 Emergency Alert: Cyclone expected in coastal areas. Stay safe and follow official updates.
+      </div>
 
-          <!-- Contact Info -->
-          <div class="contact-info">
-            <h3>Contact Information</h3>
-            <p><strong>Website:</strong> ResQNet</p>
-            <p><strong>Email:</strong> contact@resqnet.org</p>
-            <p><strong>Phone:</strong> +1-234-567-890</p>
+      <div class="row g-4 mt-4">
+        <div class="col-md-4">
+          <div class="card shadow p-3 text-center animate__animated animate__fadeInUp">
+            <h3>📡 Real-time Alerts</h3>
+            <p>Instant disaster alerts with location-based notifications.</p>
           </div>
         </div>
-
-        <!-- Right Side Panel -->
-        <aside class="sidebar">
-          <!-- Contact Us -->
-          <div class="contact-panel">
-            <button>Contact Us</button>
-            <p><strong>Email:</strong> <a href="mailto:someone@example.com">someone@example.com</a></p>
-            <p><strong>Phone:</strong> <a href="tel:+1234567890">+1 234 567 890</a></p>
+        <div class="col-md-4">
+          <div class="card shadow p-3 text-center animate__animated animate__fadeInUp">
+            <h3>🗺️ Interactive Maps</h3>
+            <p>Live disaster maps with shelters and evacuation routes.</p>
           </div>
-
-          <!-- Share This -->
-          <div class="share-box">
-            <h3>Share This</h3>
-            <button onclick="alert('Share via Email Placeholder')">📧 Email</button>
-            <button onclick="navigator.clipboard.writeText(window.location.href)">🔗 Copy Link</button>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow p-3 text-center animate__animated animate__fadeInUp">
+            <h3>🤝 Community Reports</h3>
+            <p>Users can report incidents with photos, videos, or text.</p>
           </div>
-        </aside>
+        </div>
       </div>
     </section>
 
-    <!-- Contact Us Page -->
+    <!-- Report -->
+    <section id="report" class="page">
+      <div class="report-hero">
+        <div class="overlay">
+          <h1>Disaster Reporting</h1>
+          <p>Submit incidents, upload evidence, and help the community stay safe.</p>
+        </div>
+      </div>
+      <div class="card shadow p-4">
+        <h2>Submit a Report</h2>
+        <form>
+          <div class="mb-3">
+            <label class="form-label">Incident Description</label>
+            <textarea class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Attach Evidence</label>
+            <input type="file" class="form-control" accept="image/*,video/*">
+          </div>
+          <button type="submit" class="btn btn-danger">Submit Report</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Donation -->
+    <section id="donation" class="page">
+      <div class="donation-hero">
+        <div class="overlay">
+          <h1>Make a Donation</h1>
+          <p>Your support helps us save lives during disasters. 🇮🇳</p>
+        </div>
+      </div>
+      <div class="card shadow p-4 text-center">
+        <h2 class="text-primary">Donation Form</h2>
+        <form>
+          <input type="text" class="form-control my-2" placeholder="Full Name" required>
+          <input type="email" class="form-control my-2" placeholder="Email" required>
+          <input type="number" class="form-control my-2" placeholder="Amount (₹)" required>
+          <button type="submit" class="btn btn-success">Donate Now</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Register -->
+    <section id="register" class="page">
+      <div class="card shadow p-4">
+        <h2 class="text-primary">Register</h2>
+        <form>
+          <div class="row g-3">
+            <div class="col-md-6"><input type="text" class="form-control" placeholder="Full Name" required></div>
+            <div class="col-md-6"><input type="text" class="form-control" placeholder="Username" required></div>
+            <div class="col-md-6"><input type="email" class="form-control" placeholder="Email" required></div>
+            <div class="col-md-6"><input type="tel" class="form-control" placeholder="Phone" required></div>
+            <div class="col-md-6"><input type="password" class="form-control" placeholder="Password" required></div>
+            <div class="col-md-6"><input type="password" class="form-control" placeholder="Confirm Password" required></div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3">Register</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Login -->
+    <section id="login" class="page">
+      <div class="card shadow p-4">
+        <h2 class="text-primary">Login</h2>
+        <form>
+          <div class="mb-3"><input type="text" class="form-control" placeholder="Username" required></div>
+          <div class="mb-3"><input type="password" class="form-control" placeholder="Password" required></div>
+          <button type="submit" class="btn btn-dark">Login</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Contact -->
     <section id="contact" class="page">
       <div class="contact-hero">
         <div class="overlay">
@@ -87,319 +216,20 @@
           <p>We’re here to assist you 24/7 with disaster management support and queries.</p>
         </div>
       </div>
-
-      <div class="contact-heading">
-        <h2>For Queries, Feedback and Assistance</h2>
-        <p>Please select the segment you need help with and provide your details below.</p>
-      </div>
-
-      <div class="contact-container">
-        <!-- Left Column -->
-        <div class="contact-form">
-          <form onsubmit="event.preventDefault(); alert('Form Submitted!');">
-            <label>Enquiry Type</label>
-            <select>
-              <option>Select Type</option>
-              <option>General</option>
-              <option>Support</option>
-              <option>Feedback</option>
-            </select>
-
-            <label>Segment Selection</label>
-            <select>
-              <option>Select Segment</option>
-              <option>Disaster Reporting</option>
-              <option>Donations</option>
-              <option>Volunteer</option>
-            </select>
-
-            <label>Name</label>
-            <input type="text" placeholder="Enter your name">
-
-            <label>Email Address</label>
-            <input type="email" placeholder="Enter your email">
-
-            <label>Mobile Number</label>
-            <input type="tel" placeholder="Enter your mobile number">
-
-            <label>City</label>
-            <input type="text" placeholder="Enter your city">
-
-            <label>Description</label>
-            <textarea placeholder="Describe your query"></textarea>
-
-            <label>Preferred Time Slot</label>
-            <input type="time">
-
-            <button type="submit">Submit</button>
-          </form>
-        </div>
-        <!-- Hero / Banner -->
-<section id="home" class="page active">
-  <div class="hero-banner">
-    <h1 class="animate__animated animate__fadeInDown">🌐 ResQNet</h1>
-    <p class="animate__animated animate__fadeInUp">AI-powered Disaster Management System</p>
-    <a href="#report" class="cta-btn animate__animated animate__pulse animate__infinite">Report Now</a>
-  </div>
-
-  <!-- Emergency Alert Box -->
-  <div class="alert-box animate__animated animate__shakeX">
-    🚨 Emergency Alert: Cyclone expected in coastal areas. Stay safe and follow official updates.
-  </div>
-
-  <!-- Features Section -->
-  <section class="features">
-    <h2 data-aos="fade-up">Key Features</h2>
-    <div class="features-grid">
-      <div class="card" data-aos="fade-right">
-        <h3>📡 Real-time Alerts</h3>
-        <p>Instant disaster alerts with location-based notifications.</p>
-      </div>
-      <div class="card" data-aos="zoom-in">
-        <h3>🗺️ Interactive Maps</h3>
-        <p>Live disaster maps with shelters and evacuation routes.</p>
-      </div>
-      <div class="card" data-aos="fade-left">
-        <h3>🤝 Community Reports</h3>
-        <p>Users can report incidents with photos, videos, or text.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Contact Form -->
-  <section id="contact" class="contact" data-aos="fade-up">
-    <h2>📩 Contact Us</h2>
-    <form class="contact-form">
-      <input type="text" placeholder="Your Name" required>
-      <input type="email" placeholder="Your Email" required>
-      <textarea placeholder="Your Message" required></textarea>
-      <button type="submit" class="btn-animated">Send Message</button>
-    </form>
-  </section>
-</section>
-
-
-        <!-- Right Column -->
-        <div class="contact-support">
-          <h3>Customer Support</h3>
-          <p>📞 <strong>Phone:</strong> +1 234 567 890</p>
-          <p>📍 <strong>Address:</strong> 123 ResQNet HQ, City, Country</p>
-          <p>💬 <strong>Live Chat:</strong> <a href="#">Click here to chat</a></p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Register Page -->
-    <section id="register" class="page">
-      <div class="register-container">
-        <div class="register-card">
-          <h2>Registration</h2>
-          <form id="registerForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="fullname">Full Name</label>
-                <input type="text" id="fullname" placeholder="Enter your full name" required>
-              </div>
-              <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" placeholder="Choose a username" required>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" placeholder="Enter your email" required>
-              </div>
-              <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="tel" id="phone" placeholder="Enter phone number" required>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter password" required>
-              </div>
-              <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
-              </div>
-            </div>
-
-            <div class="form-group full-width">
-              <label>Gender</label>
-              <div class="gender-options">
-                <label><input type="radio" name="gender" value="Male" required> Male</label>
-                <label><input type="radio" name="gender" value="Female"> Female</label>
-                <label><input type="radio" name="gender" value="NA"> Prefer not to say</label>
-              </div>
-            </div>
-
-            <button type="submit" class="register-btn">Register</button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <!-- Login Page -->
-    <section id="login" class="page">
-      <div class="login-container">
-        <h2>Login</h2>
-        <form id="loginForm">
-          <input type="text" id="loginusername" placeholder="Your Username" required>
-          <input type="password" id="loginpassword" placeholder="Password" required>
-          <button type="submit">Login</button>
+      <div class="card shadow p-4">
+        <form>
+          <input type="text" class="form-control my-2" placeholder="Your Name" required>
+          <input type="email" class="form-control my-2" placeholder="Your Email" required>
+          <textarea class="form-control my-2" rows="3" placeholder="Message" required></textarea>
+          <button type="submit" class="btn btn-success">Send Message</button>
         </form>
-        <p>You have no account? <a href="#register">Register Here</a></p>
+        <hr>
+        <p>📧 contact@resqnet.org</p>
+        <p>📞 +1-234-567-890</p>
+        <p>📍 123 ResQNet HQ, City, Country</p>
       </div>
     </section>
-    <!-- Report Page -->
-<section id="report" class="page">
-  <!-- Hero Banner -->
-  <div class="report-hero">
-    <div class="overlay">
-      <h1>Disaster Reporting</h1>
-      <p>Submit incidents, upload evidence, and help the community stay safe.</p>
-    </div>
-  </div>
 
-  <div class="report-container">
-    <!-- Left Column: Report Form -->
-    <div class="report-form">
-      <h2>Submit a Report</h2>
-      <form id="reportForm">
-        
-        <!-- Description -->
-        <label for="description">Incident Description</label>
-        <textarea id="description" placeholder="Describe the incident..." required></textarea>
-
-        <!-- Email Selection -->
-        <label for="emailSelect">Your Email</label>
-        <select id="emailSelect" required>
-          <option value="">Select your email</option>
-          <option>user1@example.com</option>
-          <option>user2@example.com</option>
-          <option>custom (enter manually)</option>
-        </select>
-        <input type="email" id="customEmail" placeholder="Enter custom email" style="display:none;">
-
-        <!-- File Upload -->
-        <label for="attachment">Attach Evidence (image/video)</label>
-        <input type="file" id="attachment" accept="image/*,video/*">
-
-        <!-- Checkboxes -->
-        <div class="checkboxes">
-          <label><input type="checkbox" id="urgent"> Mark as Urgent</label>
-          <label><input type="checkbox" id="anonymous"> Submit Anonymously</label>
-        </div>
-
-        <!-- Submit -->
-        <button type="submit" class="report-btn">Submit Report</button>
-      </form>
-    </div>
-
-    <!-- Right Column: Community Reports -->
-    <div class="community-reports">
-      <h2>Community Reports</h2>
-      <div id="reportsList">
-        <!-- Example Report -->
-        <div class="report-card">
-          <p><strong>🚨 Flood reported in City Center.</strong></p>
-          <small>Submitted by: user1@example.com</small>
-        </div>
-        <div class="report-card">
-          <p><strong>🔥 Fire spotted near Riverside Park.</strong></p>
-          <small>Submitted Anonymously</small>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-<!-- Donation Page -->
-<section id="donation" class="page">
-  <!-- Hero Banner -->
-  <div class="donation-hero">
-    <div class="overlay">
-      <h1>Make a Donation</h1>
-      <p>Your support helps us save lives during disasters. 🇮🇳</p>
-    </div>
-  </div>
-
-  <div class="donation-container">
-    <div class="donation-card">
-      <h2>Donation Form</h2>
-      <form id="donationForm">
-        
-        <!-- Citizenship -->
-        <label>Are you an Indian Citizen?</label>
-        <div class="radio-group">
-          <label><input type="radio" name="citizenship" value="yes" required> Yes</label>
-          <label><input type="radio" name="citizenship" value="no"> No</label>
-        </div>
-
-        <!-- Donation Amount -->
-        <label>Select Donation Amount (INR)</label>
-        <div class="amount-options">
-          <button type="button" class="amount-btn" data-amount="500">₹500</button>
-          <button type="button" class="amount-btn" data-amount="1000">₹1000</button>
-          <button type="button" class="amount-btn" data-amount="2500">₹2500</button>
-          <button type="button" class="amount-btn" data-amount="5000">₹5000</button>
-        </div>
-        <input type="number" id="customAmount" placeholder="Enter custom amount (₹)" min="1">
-
-        <!-- Donor Details -->
-        <h3>Donor Details</h3>
-        <input type="text" id="fullname" placeholder="Full Name" required>
-        <input type="email" id="email" placeholder="Email Address" required>
-        <input type="tel" id="phone" placeholder="+91 XXXXX XXXXX" pattern="^\+91[0-9]{10}$" required>
-        <input type="text" id="address" placeholder="Full Address" required>
-        <input type="text" id="city" placeholder="City" required>
-        <select id="state" required>
-          <option value="">Select State</option>
-          <option>Uttar Pradesh</option>
-          <option>Maharashtra</option>
-          <option>Delhi</option>
-          <option>Tamil Nadu</option>
-          <option>Karnataka</option>
-          <!-- Add more states -->
-        </select>
-        <input type="text" id="pincode" placeholder="PIN Code" pattern="^[1-9][0-9]{5}$" required>
-
-        <!-- PAN for Tax -->
-        <input type="text" id="pan" placeholder="PAN Number (ABCDE1234F)" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" required>
-        <label><input type="checkbox" id="taxCert"> I want 80G Tax Certificate</label>
-
-        <!-- Payment Methods -->
-        <h3>Payment Method</h3>
-        <div class="payment-methods">
-          <label><input type="radio" name="payment" value="upi" required> UPI (Google Pay, PhonePe, Paytm)</label>
-          <label><input type="radio" name="payment" value="card"> Credit/Debit Card</label>
-          <label><input type="radio" name="payment" value="netbanking"> Net Banking</label>
-        </div>
-
-        <!-- Captcha -->
-        <div class="captcha-box">
-          <label for="captcha">Enter Captcha: <strong id="captchaText"></strong></label>
-          <input type="text" id="captcha" required placeholder="Enter captcha here">
-        </div>
-
-        <!-- Terms -->
-        <label><input type="checkbox" id="terms" required> I agree to the Terms & Conditions</label>
-
-        <!-- Submit -->
-        <button type="submit" class="donate-btn">Donate Now</button>
-      </form>
-    </div>
-  </div>
-</section>
-
-
-
-    <!-- Other Pages -->
-    <section id="report" class="page"><h2>Report Form Placeholder</h2></section>
-    <section id="donation" class="page"><h2>Donation Page Placeholder</h2></section>
   </main>
 
   <!-- Footer -->
@@ -407,6 +237,20 @@
     <p>© 2025 ResQNet | Disaster Management Platform</p>
   </footer>
 
-  <script src="script.js"></script>
+  <script>
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.getAttribute('onclick')?.includes(pageId)) {
+          link.classList.add('active');
+        }
+      });
+    }
+  </script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

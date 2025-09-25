@@ -1,10 +1,7 @@
 
 // DOM READY
 document.addEventListener("DOMContentLoaded", () => {
-
-  
   // Navigation (SPA-like behavior)
-
   const navLinks = document.querySelectorAll(".nav-links a");
   const pages = document.querySelectorAll(".page");
 
@@ -20,7 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (targetLink) targetLink.classList.add("active");
     if (targetPage) targetPage.classList.add("active");
   }
-
   // Navigation click handling
   navLinks.forEach(link => {
     link.addEventListener("click", e => {
