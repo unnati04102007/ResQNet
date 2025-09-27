@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQNet - Donation System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ResQNet</h1>
+            <p>Emergency Response & Donation Management System</p>
+        </div>
+
+        <div class="content">
+            <div class="donation-form">
+                <h2 class="form-title">Make a Donation</h2>
+                
+                <div id="message"></div>
+                
+                <form id="donationForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="donor_name">Full Name *</label>
+                            <input type="text" id="donor_name" name="donor_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="donor_email">Email Address *</label>
+                            <input type="email" id="donor_email" name="donor_email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="amount">Amount *</label>
+                            <div class="amount-buttons">
+                                <div class="amount-btn" data-amount="25">$25</div>
+                                <div class="amount-btn" data-amount="50">$50</div>
+                                <div class="amount-btn" data-amount="100">$100</div>
+                                <div class="amount-btn" data-amount="250">$250</div>
+                                <div class="amount-btn" data-amount="500">$500</div>
+                                <div class="amount-btn" data-amount="1000">$1000</div>
+                            </div>
+                            <input type="number" id="amount" name="amount" min="1" step="0.01" required placeholder="Enter custom amount">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="currency">Currency</label>
+                            <select id="currency" name="currency">
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="INR">INR - Indian Rupee</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="purpose">Purpose (Optional)</label>
+                        <textarea id="purpose" name="purpose" rows="3" placeholder="How would you like your donation to be used?"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        Submit Donation
+                    </button>
+                </form>
+            </div>
+
+            <div class="donations-section">
+                <h2 class="section-title">Recent Donations</h2>
+                <div id="donationsList" class="donations-list">
+                    <div class="loading">Loading donations...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Amount button functionality
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                // Set the amount input value
+                document.getElementById('amount').value = this.dataset.amount;
+            });
+        });
+
+        // Form submission
+        document.getElementById('donationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+            
+            // Disable submit button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            // Clear previous messages
+            messageDiv.innerHTML = '';
+            
+            // Get form data
+            const formData = new FormData(this);
+            const donationData = {
+                donor_name: formData.get('donor_name'),
+                donor_email: formData.get('donor_email'),
+                amount: parseFloat(formData.get('amount')),
+                currency: formData.get('currency'),
+                purpose: formData.get('purpose') || ''
+            };
+            
+            try {
+                const response = await fetch('/api/donate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(donationData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.innerHTML = `
+                        <div class="success">
+                            <strong>Success!</strong> Thank you for your donation of ${donationData.currency} ${donationData.amount}!
+                        </div>
+                    `;
+                    
+                    // Reset form
+                    this.reset();
+                    document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+                    
+                    // Refresh donations list
+                    loadDonations();
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="error">
+                            <strong>Error:</strong> ${result.error || 'Failed to submit donation'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Connection Error:</strong> Unable to connect to the server. Please check if the backend is running.
+                    </div>
+                `;
+                console.error('Error:', error);
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Donation';
+            }
+        });
+
+        // Load donations
+        async function loadDonations() {
+            const donationsList = document.getElementById('donationsList');
+            
+            try {
+                const response = await fetch('/api/get-donations');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.donations.length === 0) {
+                        donationsList.innerHTML = `
+                            <div class="no-donations">
+                                No donations yet. Be the first to make a donation!
+                            </div>
+                        `;
+                    } else {
+                        donationsList.innerHTML = result.donations.map(donation => `
+                            <div class="donation-card">
+                                <div class="donation-header">
+                                    <div class="donor-name">${escapeHtml(donation.donor_name)}</div>
+                                    <div class="donation-amount">${donation.currency} ${donation.amount}</div>
+                                </div>
+                                <div class="donation-details">
+                                    <div>Email: ${escapeHtml(donation.donor_email)}</div>
+                                    <div>Date: ${new Date(donation.created_at).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}</div>
+                                    ${donation.purpose ? `<div class="donation-purpose">"${escapeHtml(donation.purpose)}"</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    donationsList.innerHTML = `
+                        <div class="error">
+                            <strong>Error:</strong> ${result.error || 'Failed to load donations'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                donationsList.innerHTML = `
+                    <div class="error">
+                        <strong>Connection Error:</strong> Unable to load donations. Please check if the backend is running.
+                    </div>
+                `;
+                console.error('Error:', error);
+            }
+        }
+
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load donations on page load
+        document.addEventListener('DOMContentLoaded', loadDonations);
+    </script>
+</body>
+</html>

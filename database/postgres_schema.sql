@@ -36,6 +36,3 @@ BEGIN
     EXECUTE FUNCTION set_updated_at();
   END IF;
 END $$;
-
-
-

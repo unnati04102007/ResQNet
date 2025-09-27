@@ -39,5 +39,3 @@ def get_db_session() -> Iterator[Session]:
         raise
     finally:
         session.close()
-
-

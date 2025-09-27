@@ -2,8 +2,13 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from flask import Blueprint, jsonify, request
-from .db import get_db_session
-from .donation_models import Donation, DonationStatus
+
+try:
+    from .db import get_db_session
+    from .donation_models import Donation, DonationStatus
+except ImportError:
+    from db import get_db_session
+    from donation_models import Donation, DonationStatus
 
 
 donations_bp = Blueprint("donations", __name__)
@@ -103,5 +108,3 @@ def get_donations():
             })
 
     return jsonify({"donations": data, "count": len(data)}), 200
-
-

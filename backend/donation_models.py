@@ -1,8 +1,14 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import BigInteger, CheckConstraint, Column, DateTime, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
-from .db import Base
+
+try:
+    from .db import Base
+except ImportError:
+    from db import Base
+
 
 class DonationStatus:
     PENDING = "pending"
@@ -24,7 +30,7 @@ class Donation(Base):
     payment_method = Column(Text, nullable=True)
     payment_reference = Column(Text, nullable=True, unique=True)
     status = Column(String(16), nullable=False, default=DonationStatus.PENDING)
-    extra_data = Column(JSONB, nullable=True)  # renamed from metadata ✅
+    extra_data = Column(JSONB, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
