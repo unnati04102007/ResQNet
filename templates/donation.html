@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Donation - ResQNet{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Donation page enhanced styles (frontend only) */
+    .donation-enhanced .form-title { margin-bottom: 10px; }
+    .donation-subtext { color: #6b7280; text-align: center; margin-bottom: 20px; }
+    .payment-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 10px; }
+    .payment-tile { display: flex; align-items: center; gap: 10px; border: 2px solid #e5e7eb; border-radius: 12px; padding: 10px 12px; background: #fff; cursor: pointer; transition: all .2s ease; }
+    .payment-tile:hover { border-color: #4CAF50; box-shadow: 0 4px 14px rgba(76,175,80,.1); }
+    .payment-tile.selected { border-color: #4CAF50; background: #f0fdf4; }
+    .payment-logo { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: #f3f4f6; font-size: 16px; }
+    .hidden-select { display:none; }
+    .recent-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .recent-header h2 { margin:0; }
+    .recent-small { color:#6b7280; font-size:.9rem; }
+    .donation-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px; border:1px solid #e5e7eb; border-radius:12px; background:#fff; }
+    .donation-row .meta { display:flex; flex-direction:column; }
+    .badge { display:inline-block; padding:4px 10px; border-radius:9999px; font-size:.8rem; background:#e8f5e8; color:#2e7d32; }
+    .amount-badge { color:#111827; font-weight:700; }
+    @media (max-width: 600px){ .donation-row { flex-direction:column; align-items:flex-start; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="donation-page donation-enhanced">
+    <div class="report-header">
+        <h1>Make a Donation</h1>
+        <p>Support emergency response efforts by contributing to ResQNet.</p>
+    </div>
+
+    <div class="donation-form form-card">
+        <div id="message"></div>
+        <form id="donationForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="donor_name">Full Name *</label>
+                    <input type="text" id="donor_name" name="donor_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="donor_email">Email Address *</label>
+                    <input type="email" id="donor_email" name="donor_email" required>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount *</label>
+                    <div class="amount-buttons">
+                        <div class="amount-btn" data-amount="25">$25</div>
+                        <div class="amount-btn" data-amount="50">$50</div>
+                        <div class="amount-btn" data-amount="100">$100</div>
+                        <div class="amount-btn" data-amount="250">$250</div>
+                        <div class="amount-btn" data-amount="500">$500</div>
+                        <div class="amount-btn" data-amount="1000">$1000</div>
+                    </div>
+                    <input type="number" id="amount" name="amount" min="1" step="0.01" required placeholder="Enter custom amount">
+                </div>
+                <div class="form-group">
+                    <label for="currency">Currency</label>
+                    <select id="currency" name="currency">
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="INR">INR - Indian Rupee</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="purpose">Purpose (Optional)</label>
+                <textarea id="purpose" name="purpose" rows="3" placeholder="How would you like your donation to be used?"></textarea>
+            </div>
+
+            <!-- Payment modes (visual tiles) -->
+            <div class="form-group">
+                <label>Choose Payment Method *</label>
+                <div class="payment-modes" id="paymentModes">
+                    <div class="payment-tile" data-method="GPay" tabindex="0" role="button" aria-label="GPay">
+                        <span class="payment-logo">🅶</span>
+                        <span>GPay</span>
+                    </div>
+                    <div class="payment-tile" data-method="PhonePe" tabindex="0" role="button" aria-label="PhonePe">
+                        <span class="payment-logo">Ⓟ</span>
+                        <span>PhonePe</span>
+                    </div>
+                    <div class="payment-tile" data-method="Card" tabindex="0" role="button" aria-label="Card">
+                        <span class="payment-logo">💳</span>
+                        <span>Card</span>
+                    </div>
+                    <div class="payment-tile" data-method="Other" tabindex="0" role="button" aria-label="Other">
+                        <span class="payment-logo">⋯</span>
+                        <span>Other</span>
+                    </div>
+                </div>
+                <!-- Hidden select for backend compatibility -->
+                <select id="pay_via" name="pay_via" class="hidden-select" required>
+                    <option value="">Select Payment Method</option>
+                    <option value="GPay">GPay</option>
+                    <option value="PhonePe">PhonePe</option>
+                    <option value="Card">Card</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-large" id="submitBtn">Donate</button>
+        </form>
+    </div>
+
+    <div class="donations-section">
+        <div class="incidents-card">
+            <div class="recent-header">
+                <h2>Recent Donations</h2>
+                <span class="recent-small">Showing latest 5</span>
+            </div>
+            <div id="donationsList" class="donations-list">
+                <div class="loading">Loading donations...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.amount-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('amount').value = this.dataset.amount;
+        });
+    });
+
+    // Payment mode selection tiles
+    const methodTiles = Array.from(document.querySelectorAll('.payment-tile'));
+    const payViaSelect = document.getElementById('pay_via');
+    methodTiles.forEach(tile => {
+        const selectTile = () => {
+            methodTiles.forEach(t => t.classList.remove('selected'));
+            tile.classList.add('selected');
+            const method = tile.getAttribute('data-method');
+            payViaSelect.value = method;
+        };
+        tile.addEventListener('click', selectTile);
+        tile.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); selectTile(); }});
+    });
+
+    document.getElementById('donationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        const messageDiv = document.getElementById('message');
+        // Client-side validation
+        const requiredIds = ['donor_name','donor_email','amount'];
+        for (const id of requiredIds) {
+            const el = document.getElementById(id);
+            if (!el || !String(el.value).trim()) {
+                messageDiv.innerHTML = `<div class="flash-message flash-error">Please fill all required fields.</div>`;
+                return;
+            }
+        }
+        if (!payViaSelect.value) {
+            messageDiv.innerHTML = `<div class="flash-message flash-error">Please choose a payment method.</div>`;
+            return;
+        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        messageDiv.innerHTML = '';
+        const formData = new FormData(this);
+        const donationData = {
+            donor_name: formData.get('donor_name'),
+            donor_email: formData.get('donor_email'),
+            amount: parseFloat(formData.get('amount')),
+            currency: formData.get('currency'),
+            purpose: formData.get('purpose') || '',
+            pay_via: payViaSelect.value || formData.get('pay_via')
+        };
+        try {
+            // Create Checkout Session via backend
+            const response = await fetch('/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(donationData)
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                messageDiv.innerHTML = `<div class="flash-message flash-error">${result.error || 'Failed to create checkout session'}</div>`;
+            } else if (result && result.url) {
+                // Redirect to Stripe Checkout
+                window.location.href = result.url;
+                return; // leaving the page
+            } else {
+                messageDiv.innerHTML = `<div class="flash-message flash-error">Unexpected response from server.</div>`;
+            }
+        } catch (error) {
+            messageDiv.innerHTML = `<div class="flash-message flash-error">Connection error. Please try again.</div>`;
+            console.error('Error:', error);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Donate';
+        }
+    });
+
+    async function loadDonations() {
+        const donationsList = document.getElementById('donationsList');
+        try {
+            const response = await fetch('/api/get-donations');
+            const result = await response.json();
+            if (response.ok) {
+                const items = (result.donations || []).slice(0, 5);
+                if (!items.length) {
+                    donationsList.innerHTML = '<div class="no-incidents">No donations yet. Be the first!</div>';
+                    return;
+                }
+                donationsList.innerHTML = items.map(donation => {
+                    const masked = maskName(donation.donor_name || 'Anonymous');
+                    const dateStr = new Date(donation.created_at).toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                    return `
+                    <div class="donation-row">
+                        <div class="meta">
+                            <strong>${escapeHtml(masked)}</strong>
+                            <span class="badge">${escapeHtml(donation.pay_via || '')}</span>
+                        </div>
+                        <div class="meta">
+                            <span class="amount-badge">${escapeHtml(donation.currency)} ${escapeHtml(String(donation.amount))}</span>
+                            ${donation.purpose ? `<span class="donation-purpose">${escapeHtml(donation.purpose)}</span>` : ''}
+                        </div>
+                        <div class="meta" style="text-align:right;">
+                            <span class="recent-small">${escapeHtml(dateStr)}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else {
+                donationsList.innerHTML = '<div class="error">Failed to load donations.</div>';
+            }
+        } catch (e) {
+            donationsList.innerHTML = '<div class="error">Unable to load donations.</div>';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function maskName(name) {
+        const parts = String(name).trim().split(/\s+/);
+        if (!parts.length) return 'Anonymous';
+        const first = parts[0];
+        const last = parts.length > 1 ? parts[parts.length - 1][0] + '.' : '';
+        return last ? `${first} ${last}` : first;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDonations);
+</script>
+{% endblock %}
+

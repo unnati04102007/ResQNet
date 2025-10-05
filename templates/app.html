@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQNet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        section { scroll-margin-top: 90px; }
+        .container-narrow { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        .spacer { height: 24px; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#home" class="logo">ResQNet</a>
+            <ul class="nav-links">
+                <li><a href="#home" class="active">Home</a></li>
+                <li><a href="#report">Report</a></li>
+                <li><a href="#donation">Donation</a></li>
+                {% if session.name %}
+                    <li><a href="/logout">Logout ({{ session.name }})</a></li>
+                {% else %}
+                    <li><a href="#register">Register</a></li>
+                    <li><a href="#login">Login</a></li>
+                {% endif %}
+                <li><a href="#contact">Contact Us</a></li>
+            </ul>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon"></i>
+            </button>
+            {% if not request.path.startswith('/register') %}
+                <div class="lang-switcher">
+                    <label for="language-select" class="lang-label">🌐</label>
+                    <select id="language-select" class="lang-select" onchange="changeLanguage(this.value)">
+                        <option value="en" {% if session.get('language','en') == 'en' %}selected{% endif %}>English</option>
+                        <option value="hi" {% if session.get('language','en') == 'hi' %}selected{% endif %}>हिंदी</option>
+                    </select>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Home -->
+    <section id="home" class="container-narrow">
+        <div class="report-header">
+            <h1>ResQNet</h1>
+            <p>Emergency Response & Donation Management System</p>
+        </div>
+        <div class="spacer"></div>
+        <div class="card">
+            <h2>About ResQNet</h2>
+            <p>Coordinate emergency response, manage donations and empower communities.</p>
+            <a href="#donation" class="btn">Make a Donation</a>
+        </div>
+    </section>
+
+    <!-- Donation -->
+    <section id="donation" class="container-narrow">
+        <div class="spacer"></div>
+        <div class="donation-form form-card">
+            <h2 class="form-title">Make a Donation</h2>
+            <div id="message"></div>
+            <form id="donationForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="donor_name">Full Name *</label>
+                        <input type="text" id="donor_name" name="donor_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="donor_email">Email Address *</label>
+                        <input type="email" id="donor_email" name="donor_email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount *</label>
+                        <div class="amount-buttons">
+                            <div class="amount-btn" data-amount="25">$25</div>
+                            <div class="amount-btn" data-amount="50">$50</div>
+                            <div class="amount-btn" data-amount="100">$100</div>
+                            <div class="amount-btn" data-amount="250">$250</div>
+                            <div class="amount-btn" data-amount="500">$500</div>
+                            <div class="amount-btn" data-amount="1000">$1000</div>
+                        </div>
+                        <input type="number" id="amount" name="amount" min="1" step="0.01" required placeholder="Enter custom amount">
+                    </div>
+                    <div class="form-group">
+                        <label for="currency">Currency</label>
+                        <select id="currency" name="currency">
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="GBP">GBP - British Pound</option>
+                            <option value="INR">INR - Indian Rupee</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="purpose">Purpose (Optional)</label>
+                    <textarea id="purpose" name="purpose" rows="3" placeholder="How would you like your donation to be used?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Choose Payment Method *</label>
+                    <div class="payment-modes" id="paymentModes">
+                        <div class="payment-tile" data-method="GPay" tabindex="0" role="button" aria-label="GPay"><span class="payment-logo">🅶</span><span>GPay</span></div>
+                        <div class="payment-tile" data-method="PayPal" tabindex="0" role="button" aria-label="PayPal"><span class="payment-logo">Ⓟ</span><span>PayPal</span></div>
+                        <div class="payment-tile" data-method="Credit Card" tabindex="0" role="button" aria-label="Credit or Debit Card"><span class="payment-logo">💳</span><span>Credit/Debit Card</span></div>
+                        <div class="payment-tile" data-method="Apple Pay" tabindex="0" role="button" aria-label="Apple Pay"><span class="payment-logo"></span><span>Apple Pay</span></div>
+                        <div class="payment-tile" data-method="UPI" tabindex="0" role="button" aria-label="UPI"><span class="payment-logo">🇮🇳</span><span>UPI</span></div>
+                    </div>
+                    <select id="pay_via" name="pay_via" class="hidden-select" required>
+                        <option value="">Select Payment Method</option>
+                        <option value="GPay">GPay</option>
+                        <option value="PayPal">PayPal</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Apple Pay">Apple Pay</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-large" id="submitBtn">Submit Donation</button>
+            </form>
+        </div>
+
+        <div class="incidents-card" style="margin-top:20px;">
+            <div class="recent-header"><h2>Recent Donations</h2><span class="recent-small">Showing latest 5</span></div>
+            <div id="donationsList" class="donations-list">
+                <div class="loading">Loading donations...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="container-narrow">
+        <div class="spacer"></div>
+        <div class="incidents-card">
+            <h2>ResQNet Customer Support</h2>
+            <p>Our team is here to help you out. You can get in touch with us via phone.</p>
+            <div class="contact-info">
+                <p><strong>Phone:</strong> 1800 266 6282</p>
+                <p><strong>Address:</strong><br>Olympus A, Hiranandani Estate,<br>Ghodbunder Road, Patlipada,<br>Thane West - 400607, Maharashtra.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auth (light placeholders to keep single-page) -->
+    <section id="register" class="container-narrow">
+        <div class="spacer"></div>
+        <div class="auth-card">
+            <div class="auth-header"><h1>Register</h1><p>Create your account</p></div>
+            <form method="POST" action="/register" class="auth-form">
+                <div class="form-group"><label for="name">Name *</label><input type="text" id="name" name="name" required></div>
+                <div class="form-group"><label for="email">Email *</label><input type="email" id="email" name="email" required></div>
+                <div class="form-group"><label for="password">Password *</label><input type="password" id="password" name="password" required minlength="6"></div>
+                <div class="form-group"><label for="confirm_password">Confirm Password *</label><input type="password" id="confirm_password" name="confirm_password" required minlength="6"></div>
+                <div class="form-group"><label for="preferred_language">Select Language</label><select id="preferred_language" name="preferred_language"><option value="en">English</option><option value="hi">हिंदी</option></select></div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="login" class="container-narrow">
+        <div class="spacer"></div>
+        <div class="auth-card">
+            <div class="auth-header"><h1>Login</h1><p>Access your account</p></div>
+            <form method="POST" action="/login" class="auth-form">
+                <div class="form-group"><label for="login_email">Email *</label><input type="email" id="login_email" name="email" required></div>
+                <div class="form-group"><label for="login_password">Password *</label><input type="password" id="login_password" name="password" required></div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#home">Home</a>
+                <a href="#report">Report</a>
+                <a href="#donation">Donation</a>
+                <a href="#contact">Contact Us</a>
+            </div>
+            <div class="social-icons">
+                <a href="#" class="social-icon" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="social-icon" title="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="social-icon" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                <a href="#" class="social-icon" title="Instagram"><i class="fab fa-instagram"></i></a>
+            </div>
+            <div class="copyright">© 2025 ResQNet. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body; const icon = document.querySelector('.theme-toggle i');
+            if (body.classList.contains('dark-theme')) { body.classList.remove('dark-theme'); icon.className='fas fa-moon'; }
+            else { body.classList.add('dark-theme'); icon.className='fas fa-sun'; }
+        }
+        function changeLanguage(code) { window.location.href = '/change-language/' + code; }
+
+        // Donation logic (reused)
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('amount').value = this.dataset.amount;
+            });
+        });
+        const methodTiles = Array.from(document.querySelectorAll('.payment-tile'));
+        const payViaSelect = document.getElementById('pay_via');
+        methodTiles.forEach(tile => {
+            const selectTile = () => { methodTiles.forEach(t => t.classList.remove('selected')); tile.classList.add('selected'); payViaSelect.value = tile.getAttribute('data-method'); };
+            tile.addEventListener('click', selectTile);
+            tile.addEventListener('keydown', (ev) => { if (ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); selectTile(); }});
+        });
+
+        document.getElementById('donationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+            if (!payViaSelect.value) { messageDiv.innerHTML = '<div class="error">Please choose a payment method.</div>'; return; }
+            submitBtn.disabled = true; submitBtn.textContent = 'Submitting...'; messageDiv.innerHTML = '';
+            const formData = new FormData(this);
+            const donationData = {
+                donor_name: formData.get('donor_name'),
+                donor_email: formData.get('donor_email'),
+                amount: parseFloat(formData.get('amount')),
+                currency: formData.get('currency'),
+                purpose: formData.get('purpose') || '',
+                pay_via: payViaSelect.value
+            };
+            try {
+                const response = await fetch('/api/donate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(donationData)});
+                const result = await response.json();
+                if (response.ok) {
+                    messageDiv.innerHTML = '<div class="success"><strong>Success!</strong> Thank you for your donation.</div>';
+                    this.reset(); document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active')); loadDonations();
+                } else { messageDiv.innerHTML = `<div class="error">${result.error || 'Failed to submit donation'}</div>`; }
+            } catch(e) {
+                messageDiv.innerHTML = '<div class="error">Connection error. Please try again.</div>';
+            } finally { submitBtn.disabled = false; submitBtn.textContent = 'Submit Donation'; }
+        });
+
+        async function loadDonations() {
+            const donationsList = document.getElementById('donationsList');
+            try {
+                const response = await fetch('/api/get-donations');
+                const result = await response.json();
+                const items = (result.donations || []).slice(0,5);
+                if (!items.length) { donationsList.innerHTML = '<div class="no-incidents">No donations yet. Be the first!</div>'; return; }
+                donationsList.innerHTML = items.map(d => {
+                    const masked = maskName(d.donor_name || 'Anonymous');
+                    const dateStr = new Date(d.created_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+                    return `<div class=\"donation-row\"><div class=\"meta\"><strong>${escapeHtml(masked)}</strong><span class=\"badge\">${escapeHtml(d.pay_via||'')}</span></div><div class=\"meta\"><span class=\"amount-badge\">${escapeHtml(d.currency)} ${escapeHtml(String(d.amount))}</span>${d.purpose?`<span class=\"donation-purpose\">${escapeHtml(d.purpose)}</span>`:''}</div><div class=\"meta\" style=\"text-align:right;\"><span class=\"recent-small\">${escapeHtml(dateStr)}</span></div></div>`;
+                }).join('');
+            } catch(e) { donationsList.innerHTML = '<div class="error">Unable to load donations.</div>'; }
+        }
+        function escapeHtml(text){ const div=document.createElement('div'); div.textContent=text; return div.innerHTML; }
+        function maskName(name){ const parts=String(name).trim().split(/\s+/); if(!parts.length) return 'Anonymous'; const first=parts[0]; const last=parts.length>1 ? parts[parts.length-1][0]+'.' : ''; return last?`${first} ${last}`:first; }
+        document.addEventListener('DOMContentLoaded', loadDonations);
+
+        // Smooth scroll for in-page navigation
+        document.querySelectorAll('.nav-links a[href^="#"]').forEach(a=>{
+            a.addEventListener('click', (e)=>{ e.preventDefault(); const id=a.getAttribute('href'); const t=document.querySelector(id); if(t){ t.scrollIntoView({behavior:'smooth'});} document.querySelectorAll('.nav-links a').forEach(x=>x.classList.remove('active')); a.classList.add('active'); });
+        });
+    </script>
+</body>
+</html>

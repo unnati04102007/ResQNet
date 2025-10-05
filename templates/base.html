@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ResQNet{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">ResQNet</a>
+            <ul class="nav-links">
+                <li><a href="/" class="{% if request.path == '/' %}active{% endif %}">Home</a></li>
+                <li><a href="/report" class="{% if request.path.startswith('/report') %}active{% endif %}">Report</a></li>
+                <li><a href="/donation" class="{% if request.path.startswith('/donation') %}active{% endif %}">Donation</a></li>
+                {% if session.name %}
+                    <li><a href="/logout">Logout ({{ session.name }})</a></li>
+                {% else %}
+                    <li><a href="/register" class="{% if request.path.startswith('/register') %}active{% endif %}">Register</a></li>
+                    <li><a href="/login" class="{% if request.path.startswith('/login') %}active{% endif %}">Login</a></li>
+                {% endif %}
+                <li><a href="/contact" class="{% if request.path.startswith('/contact') %}active{% endif %}">Contact Us</a></li>
+            </ul>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon"></i>
+            </button>
+            {% if not request.path.startswith('/register') %}
+                <div class="lang-switcher">
+                    <label for="language-select" class="lang-label">🌐</label>
+                    <select id="language-select" class="lang-select" onchange="changeLanguage(this.value)">
+                        <option value="en" {% if CURRENT_LANGUAGE == 'en' %}selected{% endif %}>English</option>
+                        <option value="hi" {% if CURRENT_LANGUAGE == 'hi' %}selected{% endif %}>हिंदी</option>
+                    </select>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        <span class="flash-close" onclick="this.parentElement.remove()">&times;</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/report">Report</a>
+                <a href="/donation">Donation</a>
+                <a href="/contact">Contact Us</a>
+            </div>
+            <div class="social-icons">
+                <a href="#" class="social-icon" title="Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="social-icon" title="Twitter">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="#" class="social-icon" title="LinkedIn">
+                    <i class="fab fa-linkedin-in"></i>
+                </a>
+                <a href="#" class="social-icon" title="Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+            <div class="copyright">
+                © 2025 ResQNet. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle i');
+            
+            if (body.classList.contains('dark-theme')) {
+                body.classList.remove('dark-theme');
+                themeToggle.className = 'fas fa-moon';
+            } else {
+                body.classList.add('dark-theme');
+                themeToggle.className = 'fas fa-sun';
+            }
+        }
+
+        // Auto-hide flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        if (message.parentElement) {
+                            message.parentElement.removeChild(message);
+                        }
+                    }, 300);
+                }, 5000);
+            });
+        });
+
+        function changeLanguage(code) {
+            window.location.href = '/change-language/' + code;
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

@@ -1,7 +1,0 @@
-flask
-python-dotenv
-SQLAlchemy>=2.0
-psycopg[binary]
-stripe
-razorpay
-paypalrestsdk

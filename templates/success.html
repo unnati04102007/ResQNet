@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Donation Successful - ResQNet{% endblock %}
+
+{% block content %}
+<div class="form-card" style="text-align:center; padding: 24px;">
+    <h1>Thank you!</h1>
+    {% set symbol = '₹' if currency == 'INR' else '' %}
+    <p>🎉 Thank you, {{ donor_name }}! Your donation of {{ symbol }}{{ '%.2f' % amount }} {% if not symbol %}{{ currency }}{% endif %} was successful.</p>
+    <p><strong>Transaction ID:</strong> {{ payment_reference }}</p>
+    <a class="btn btn-primary" href="/donation" style="margin-top:16px;">Back to Donation</a>
+    <a class="btn" href="/" style="margin-top:16px; margin-left: 8px;">Go Home</a>
+    
+    <div class="donation-subtext" style="margin-top:20px;">Your support helps ResQNet respond faster and save more lives.</div>
+ </div>
+{% endblock %}
+
+

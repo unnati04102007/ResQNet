@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}ResQNet - Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; text-align: center; padding: 40px 20px; border-radius: 12px;">
+        <h1>ResQNet</h1>
+        <p>Emergency Response & Donation Management System</p>
+    </div>
+
+    <div class="content" style="padding: 40px 0;">
+        <div class="donation-form" style="background: #f8f9fa; border-radius: 15px; padding: 30px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);">
+            <h2 class="form-title">About ResQNet</h2>
+            <p>ResQNet coordinates emergency response, enables secure donations, and provides tools for rapid, effective action during crises.</p>
+            <a href="/donation" class="btn btn-primary" style="margin-top: 10px;">Donate Now</a>
+        </div>
+
+        <div class="donations-section" style="margin-top: 30px; display: grid; gap: 20px; grid-template-columns: 1fr 1fr;">
+            <div class="incidents-card">
+                <h2>Contact Information</h2>
+                <ul>
+                    <li><i class="fas fa-globe"></i> Website: www.resqnet.org</li>
+                    <li><i class="fas fa-envelope"></i> Email: info@resqnet.org</li>
+                    <li><i class="fas fa-phone"></i> Phone: +1 (555) 123-4567</li>
+                    <li><i class="fas fa-map-marker-alt"></i> Address: 123 Emergency Response Ave, Crisis City, CC 12345</li>
+                </ul>
+            </div>
+            <div class="incidents-card">
+                <h2>Quick Contact</h2>
+                <p>Need immediate assistance? Contact us directly:</p>
+                <ul>
+                    <li><i class="fas fa-envelope"></i> support@resqnet.org</li>
+                    <li><i class="fas fa-phone"></i> +1 (555) 987-6543</li>
+                </ul>
+                <a href="/contact" class="btn btn-secondary">Contact Us</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

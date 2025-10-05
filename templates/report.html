@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Report Incident - ResQNet{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="report-header">
+        <h1>Report Emergency Incident</h1>
+        <p>Help your community by reporting emergency situations and disasters</p>
+    </div>
+    
+    <div class="report-content">
+        <!-- Report Form (Left Side) -->
+        <div class="report-form-section">
+            <div class="form-card">
+                <h2>Submit New Report</h2>
+                {% if not session.name %}
+                    <div class="login-prompt">
+                        <p><i class="fas fa-info-circle"></i> You must be logged in to submit a report.</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-secondary">Register</a>
+                    </div>
+                {% else %}
+                    <form method="POST" enctype="multipart/form-data" class="report-form">
+                        <div class="form-group">
+                            <label for="name">Your Name (Optional)</label>
+                            <input type="text" id="name" name="name" placeholder="Enter your name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" name="email" required placeholder="your.email@example.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="location">Location *</label>
+                            <input type="text" id="location" name="location" required placeholder="City, State/Province, Country">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="disaster_type">Disaster Type *</label>
+                            <select id="disaster_type" name="disaster_type" required>
+                                <option value="">Select disaster type</option>
+                                <option value="Flood">Flood</option>
+                                <option value="Earthquake">Earthquake</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Description *</label>
+                            <textarea id="description" name="description" required rows="4" placeholder="Describe the incident in detail..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="image">Upload Image (Optional)</label>
+                            <div class="file-upload">
+                                <input type="file" id="image" name="image" accept="image/*">
+                                <label for="image" class="file-upload-label">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span id="file-name">Choose file or drag here</span>
+                                </label>
+                            </div>
+                            <small>Only images allowed (PNG, JPG, JPEG, GIF)</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-large">Submit Report</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Incidents List (Right Side) -->
+        <div class="incidents-section">
+            <div class="incidents-card">
+                <div class="incidents-header">
+                    <h2>Recent Incidents</h2>
+                    <div class="incidents-controls">
+                        <button onclick="refreshIncidents()" class="btn btn-secondary btn-small">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label for="disaster-filter">Disaster Type:</label>
+                        <select id="disaster-filter" onchange="filterIncidents()">
+                            <option value="">All Types</option>
+                            <option value="Flood">Flood</option>
+                            <option value="Earthquake">Earthquake</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="location-filter">Location:</label>
+                        <input type="text" id="location-filter" placeholder="Search location..." onkeyup="filterIncidents()">
+                    </div>
+                </div>
+                
+                <!-- Incidents List -->
+                <div id="incidents-list" class="incidents-list">
+                    <div class="loading">Loading incidents...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadIncidents() {
+        const incidentsList = document.getElementById('incidents-list');
+        const disasterFilter = document.getElementById('disaster-filter').value;
+        const locationFilter = document.getElementById('location-filter').value;
+        try {
+            let url = '/api/reports?';
+            if (disasterFilter) url += `disaster_type=${disasterFilter}&`;
+            if (locationFilter) url += `location=${locationFilter}&`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!data.reports.length) {
+                incidentsList.innerHTML = '<div class="no-incidents">No incidents found.</div>';
+                return;
+            }
+            incidentsList.innerHTML = data.reports.map(report => `
+                <div class="incident-card">
+                    <div class="incident-header">
+                        <div class="incident-type ${report.disaster_type.toLowerCase()}">${report.disaster_type}</div>
+                        <div class="incident-status ${report.status}">${report.status}</div>
+                    </div>
+                    <div class="incident-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(report.location)}</div>
+                    <div class="incident-description">${escapeHtml(truncateText(report.description, 200))}</div>
+                    <div class="incident-meta">
+                        <div class="incident-reporter"><i class="fas fa-user"></i> ${escapeHtml(report.name)}</div>
+                        <div class="incident-date"><i class="fas fa-clock"></i> ${formatDate(report.created_at)}</div>
+                    </div>
+                    ${report.image_path ? `<div class="incident-image"><img src="/uploads/${report.image_path}" alt="Incident image"></div>` : ''}
+                </div>
+            `).join('');
+        } catch (e) { incidentsList.innerHTML = '<div class="error">Failed to load incidents.</div>'; }
+    }
+    function filterIncidents(){ loadIncidents(); }
+    function refreshIncidents(){ loadIncidents(); }
+    function escapeHtml(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+    function truncateText(t,n){ if(t.length<=n) return t; return t.substring(0,n)+'...'; }
+    function formatDate(s){ const d=new Date(s); return d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
+    document.addEventListener('DOMContentLoaded', loadIncidents);
+</script>
+{% endblock %}
+
