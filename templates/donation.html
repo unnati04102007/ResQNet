@@ -27,8 +27,8 @@
 {% block content %}
 <div class="donation-page donation-enhanced">
     <div class="report-header">
-        <h1>Make a Donation</h1>
-        <p>Support emergency response efforts by contributing to ResQNet.</p>
+        <h1 id="donation_title" data-translate="donation_title">Make a Donation</h1>
+        <p id="donation_subtitle" data-translate="donation_subtitle">Support emergency response efforts by contributing to ResQNet.</p>
     </div>
 
     <div class="donation-form form-card">
@@ -36,27 +36,27 @@
         <form id="donationForm">
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="donor_name">Full Name *</label>
+                    <label for="donor_name" id="donor_name_label" data-translate="donor_name_label">Full Name *</label>
                     <input type="text" id="donor_name" name="donor_name" required>
                 </div>
                 <div class="form-group">
-                    <label for="donor_email">Email Address *</label>
+                    <label for="donor_email" id="donor_email_label" data-translate="donor_email_label">Email Address *</label>
                     <input type="email" id="donor_email" name="donor_email" required>
                 </div>
                 <div class="form-group">
-                    <label for="amount">Amount *</label>
+                    <label for="amount" id="amount_label" data-translate="amount_label">Amount *</label>
                     <div class="amount-buttons">
-                        <div class="amount-btn" data-amount="25">$25</div>
-                        <div class="amount-btn" data-amount="50">$50</div>
-                        <div class="amount-btn" data-amount="100">$100</div>
-                        <div class="amount-btn" data-amount="250">$250</div>
-                        <div class="amount-btn" data-amount="500">$500</div>
-                        <div class="amount-btn" data-amount="1000">$1000</div>
+                        <div class="amount-btn" data-amount="25" id="amount_25">$25</div>
+                        <div class="amount-btn" data-amount="50" id="amount_50">$50</div>
+                        <div class="amount-btn" data-amount="100" id="amount_100">$100</div>
+                        <div class="amount-btn" data-amount="250" id="amount_250">$250</div>
+                        <div class="amount-btn" data-amount="500" id="amount_500">$500</div>
+                        <div class="amount-btn" data-amount="1000" id="amount_1000">$1000</div>
                     </div>
                     <input type="number" id="amount" name="amount" min="1" step="0.01" required placeholder="Enter custom amount">
                 </div>
                 <div class="form-group">
-                    <label for="currency">Currency</label>
+                    <label for="currency" id="currency_label" data-translate="currency_label">Currency</label>
                     <select id="currency" name="currency">
                         <option value="USD">USD - US Dollar</option>
                         <option value="EUR">EUR - Euro</option>
@@ -66,34 +66,34 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="purpose">Purpose (Optional)</label>
+                <label for="purpose" id="purpose_label" data-translate="purpose_label">Purpose (Optional)</label>
                 <textarea id="purpose" name="purpose" rows="3" placeholder="How would you like your donation to be used?"></textarea>
             </div>
 
             <!-- Payment modes (visual tiles) -->
             <div class="form-group">
-                <label>Choose Payment Method *</label>
+                <label id="payment_method_label" data-translate="payment_method_label">Choose Payment Method *</label>
                 <div class="payment-modes" id="paymentModes">
                     <div class="payment-tile" data-method="GPay" tabindex="0" role="button" aria-label="GPay">
                         <span class="payment-logo">🅶</span>
-                        <span>GPay</span>
+                        <span id="payment_gpay" data-translate="payment_gpay">GPay</span>
                     </div>
                     <div class="payment-tile" data-method="PhonePe" tabindex="0" role="button" aria-label="PhonePe">
                         <span class="payment-logo">Ⓟ</span>
-                        <span>PhonePe</span>
+                        <span id="payment_phonepe" data-translate="payment_phonepe">PhonePe</span>
                     </div>
                     <div class="payment-tile" data-method="Card" tabindex="0" role="button" aria-label="Card">
                         <span class="payment-logo">💳</span>
-                        <span>Card</span>
+                        <span id="payment_card" data-translate="payment_card">Card</span>
                     </div>
                     <div class="payment-tile" data-method="Other" tabindex="0" role="button" aria-label="Other">
                         <span class="payment-logo">⋯</span>
-                        <span>Other</span>
+                        <span id="payment_other" data-translate="payment_other">Other</span>
                     </div>
                 </div>
                 <!-- Hidden select for backend compatibility -->
                 <select id="pay_via" name="pay_via" class="hidden-select" required>
-                    <option value="">Select Payment Method</option>
+                    <option value="" id="payment_select_placeholder">Select Payment Method</option>
                     <option value="GPay">GPay</option>
                     <option value="PhonePe">PhonePe</option>
                     <option value="Card">Card</option>
@@ -107,11 +107,11 @@
     <div class="donations-section">
         <div class="incidents-card">
             <div class="recent-header">
-                <h2>Recent Donations</h2>
-                <span class="recent-small">Showing latest 5</span>
+                <h2 id="recent_donations">Recent Donations</h2>
+                <span class="recent-small" id="recent_donations_small">Showing latest 5</span>
             </div>
             <div id="donationsList" class="donations-list">
-                <div class="loading">Loading donations...</div>
+                <div class="loading" id="donations_loading">Loading donations...</div>
             </div>
         </div>
     </div>

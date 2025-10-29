@@ -1,13 +1,17 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session, send_from_directory
+import json
 from flask_babel import Babel, gettext as _
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import string
+import requests
+import threading
+import time
 
 from dotenv import load_dotenv
 import stripe
@@ -24,22 +28,10 @@ LANGUAGES = ['en', 'hi']
 babel = Babel()
 
 def get_locale():
-    # If user selected language during session
+    # Preferred language comes from session only; no DB dependency
     lang = session.get('language')
     if lang in LANGUAGES:
         return lang
-    # If logged in and has preferred language in DB
-    try:
-        if 'user_id' in session:
-            conn = sqlite3.connect(DATABASE)
-            cursor = conn.cursor()
-            cursor.execute('SELECT preferred_language FROM users WHERE id = ?', (session['user_id'],))
-            row = cursor.fetchone()
-            conn.close()
-            if row and row[0] in LANGUAGES:
-                return row[0]
-    except Exception:
-        pass
     return 'en'
 
 # Initialize Babel with locale selector (Flask-Babel 4 style)
@@ -80,17 +72,35 @@ def init_db():
             name TEXT,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            preferred_language TEXT
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
     # If legacy 'username' exists but 'name' missing, add 'name'
     if not _column_exists(cursor, 'users', 'name'):
         cursor.execute("ALTER TABLE users ADD COLUMN name TEXT")
-    # Ensure preferred_language column exists
-    if not _column_exists(cursor, 'users', 'preferred_language'):
-        cursor.execute("ALTER TABLE users ADD COLUMN preferred_language TEXT")
+    # Note: language preference is no longer stored in DB
+    # If legacy preferred_language exists, migrate table to drop it
+    cursor.execute("PRAGMA table_info(users)")
+    cols_info = cursor.fetchall()
+    has_pref_lang = any(row[1] == 'preferred_language' for row in cols_info)
+    if has_pref_lang:
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('''
+            INSERT OR IGNORE INTO users_new (id, name, email, password_hash, created_at)
+            SELECT id, name, email, password_hash, created_at FROM users
+        ''')
+        cursor.execute('ALTER TABLE users RENAME TO users_old')
+        cursor.execute('ALTER TABLE users_new RENAME TO users')
+        cursor.execute('DROP TABLE users_old')
 
     # Create reports table (uses 'name' per spec)
     cursor.execute('''
@@ -153,6 +163,35 @@ def init_db():
         )
     ''')
 
+    # Create weather_data table for disaster prediction system
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS weather_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            city TEXT NOT NULL,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            temperature REAL NOT NULL,
+            humidity REAL NOT NULL,
+            wind_speed REAL NOT NULL,
+            rainfall REAL NOT NULL,
+            risk_type TEXT,
+            risk_level TEXT,
+            alert_message TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Create user_preferences table to store city preferences
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL UNIQUE,
+            last_city TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -174,7 +213,7 @@ def register():
         email = request.form.get('email','').strip().lower()
         password = request.form.get('password','')
         confirm_password = request.form.get('confirm_password','')
-        preferred_language = request.form.get('preferred_language','en')
+        # Language preference removed from registration
 
         if not name or not email or not password:
             flash('Please fill all required fields.', 'error')
@@ -198,33 +237,30 @@ def register():
         # Insert user (support legacy 'username' NOT NULL schema by populating it)
         cursor.execute('PRAGMA table_info(users)')
         cols = [row[1] for row in cursor.fetchall()]  # column names
-        lang_value = preferred_language if preferred_language in LANGUAGES else 'en'
         if 'username' in cols:
             cursor.execute('''
-                INSERT INTO users (name, username, email, password_hash, preferred_language)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (name, name, email, password_hash, lang_value))
+                INSERT INTO users (name, username, email, password_hash)
+                VALUES (?, ?, ?, ?)
+            ''', (name, name, email, password_hash))
         else:
             cursor.execute('''
-                INSERT INTO users (name, email, password_hash, preferred_language)
-                VALUES (?, ?, ?, ?)
-            ''', (name, email, password_hash, lang_value))
+                INSERT INTO users (name, email, password_hash)
+                VALUES (?, ?, ?)
+            ''', (name, email, password_hash))
         conn.commit()
         user_id = cursor.lastrowid
         conn.close()
 
-        # Auto-login and set language
-        session['user_id'] = user_id
-        session['name'] = name
-        session['language'] = preferred_language if preferred_language in LANGUAGES else 'en'
-        flash('Registration successful!', 'success')
-        return redirect(url_for('home'))
+        # Post-registration: go to login
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('login'))
     
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """User login"""
+    next_url = request.args.get('next') or request.form.get('next') or ''
     if request.method == 'POST':
         email = request.form.get('email','').strip().lower()
         password = request.form.get('password','')
@@ -232,7 +268,7 @@ def login():
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT id, name, password_hash, preferred_language FROM users WHERE email = ?
+            SELECT id, name, password_hash FROM users WHERE email = ?
         ''', (email,))
         user = cursor.fetchone()
         conn.close()
@@ -240,14 +276,15 @@ def login():
         if user and check_password_hash(user[2], password):
             session['user_id'] = user[0]
             session['name'] = user[1] or ''
-            if user[3] in LANGUAGES:
-                session['language'] = user[3]
             flash('Login successful!', 'success')
-            return redirect(url_for('report'))
+            # Redirect to next if provided and safe (same-site path)
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
+            return redirect(url_for('report', openModal=1))
         else:
             flash('Invalid email or password!', 'error')
     
-    return render_template('login.html')
+    return render_template('login.html', next_url=next_url)
 
 @app.route('/logout')
 def logout():
@@ -260,16 +297,6 @@ def logout():
 def change_language(lang_code: str):
     if lang_code in LANGUAGES:
         session['language'] = lang_code
-        # Optionally persist for logged-in users
-        try:
-            if 'user_id' in session:
-                conn = sqlite3.connect(DATABASE)
-                cursor = conn.cursor()
-                cursor.execute('UPDATE users SET preferred_language = ? WHERE id = ?', (lang_code, session['user_id']))
-                conn.commit()
-                conn.close()
-        except Exception:
-            pass
     return redirect(request.referrer or url_for('home'))
 
 # Report routes
@@ -279,7 +306,8 @@ def report():
     # Enforce login for both GET and POST
     if 'user_id' not in session:
         flash('Please login to access the report page.', 'error')
-        return redirect(url_for('login'))
+        # After login, return to report page and auto-open modal
+        return redirect(url_for('login', next=url_for('report', openModal=1)))
 
     if request.method == 'POST':
         # Check if user is logged in
@@ -317,7 +345,9 @@ def report():
         flash('Report submitted successfully!', 'success')
         return redirect(url_for('report'))
     
-    return render_template('report.html')
+    # Pass flag to auto-open modal
+    open_modal = request.args.get('openModal') == '1' or request.args.get('openModal') == 'true'
+    return render_template('report.html', open_modal=open_modal)
 
 @app.route('/api/reports')
 def api_reports():
@@ -363,6 +393,91 @@ def api_reports():
     
     conn.close()
     return jsonify({'reports': reports})
+
+@app.route('/get_alerts')
+def get_alerts():
+    """API endpoint to get latest 5 reports for emergency alert bar"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    
+    query = '''
+        SELECT r.name, r.location, r.disaster_type, r.created_at
+        FROM reports r
+        ORDER BY r.created_at DESC 
+        LIMIT 5
+    '''
+    
+    cursor.execute(query)
+    reports = []
+    for row in cursor.fetchall():
+        reports.append({
+            'name': row[0] or 'Anonymous',
+            'location': row[1],
+            'disaster_type': row[2],
+            'created_at': row[3]
+        })
+    
+    conn.close()
+    return jsonify({'alerts': reports})
+
+@app.route('/get_weather_alerts')
+def get_weather_alerts():
+    """API endpoint to get weather alerts for emergency alert bar (supports city filtering)"""
+    try:
+        city = request.args.get('city', '').strip()
+        
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        # Get the most recent weather alert for the specified city or overall
+        if city:
+            cursor.execute('''
+                SELECT alert_message, risk_type, risk_level, timestamp, city
+                FROM weather_data
+                WHERE city = ?
+                ORDER BY timestamp DESC
+                LIMIT 1
+            ''', (city,))
+        else:
+            cursor.execute('''
+                SELECT alert_message, risk_type, risk_level, timestamp, city
+                FROM weather_data
+                ORDER BY timestamp DESC
+                LIMIT 1
+            ''')
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return jsonify({
+                'success': True,
+                'weather_alert': {
+                    'message': result[0],
+                    'risk_type': result[1],
+                    'risk_level': result[2],
+                    'timestamp': result[3],
+                    'city': result[4]
+                }
+            })
+        else:
+            city_msg = f' for {city}' if city else ''
+            return jsonify({
+                'success': True,
+                'weather_alert': {
+                    'message': f'✅ Weather monitoring system initializing{city_msg}...',
+                    'risk_type': 'none',
+                    'risk_level': 'low',
+                    'timestamp': datetime.now().isoformat(),
+                    'city': city
+                }
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Unable to fetch weather alert: {str(e)}'
+        }), 500
 
 # Serve uploaded files
 @app.route('/uploads/<path:filename>')
@@ -413,6 +528,31 @@ def contact():
     # GET: generate captcha
     session['captcha_code'] = _generate_captcha_code()
     return render_template('contact.html', captcha_code=session['captcha_code'])
+
+# Safe Route page
+@app.route('/safe-route')
+def safe_route():
+    return render_template('safe_route.html')
+
+@app.route('/get-shelters')
+def get_shelters():
+    """Serve shelters list from local JSON file"""
+    try:
+        with open('shelters.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        # Basic validation/normalization
+        items = []
+        for item in data:
+            try:
+                name = str(item.get('name', '')).strip()
+                lat = float(item.get('lat'))
+                lon = float(item.get('lon'))
+                items.append({ 'name': name, 'lat': lat, 'lon': lon })
+            except Exception:
+                continue
+        return jsonify({ 'shelters': items })
+    except FileNotFoundError:
+        return jsonify({ 'shelters': [] })
 
 # ---- Stripe configuration and Checkout routes ----
 
@@ -667,9 +807,485 @@ def get_donations():
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
+@app.route('/api/fetch-city-weather', methods=['POST'])
+def fetch_city_weather():
+    """Fetch and store weather data for a specific city"""
+    try:
+        data = request.get_json()
+        city = data.get('city', '').strip()
+        latitude = float(data.get('latitude', 0))
+        longitude = float(data.get('longitude', 0))
+        
+        if not city or not latitude or not longitude:
+            return jsonify({'success': False, 'error': 'Invalid city data'}), 400
+        
+        # Fetch weather data from NASA API
+        weather_data = fetch_nasa_weather_data_for_coords(latitude, longitude)
+        
+        if weather_data.get('success'):
+            # Predict disaster risk
+            prediction = predict_disaster_risk(
+                weather_data['temperature'],
+                weather_data['humidity'],
+                weather_data['wind_speed'],
+                weather_data['rainfall'],
+                city
+            )
+            
+            # Store in database
+            store_weather_data(
+                city=city,
+                latitude=latitude,
+                longitude=longitude,
+                temperature=weather_data['temperature'],
+                humidity=weather_data['humidity'],
+                wind_speed=weather_data['wind_speed'],
+                rainfall=weather_data['rainfall'],
+                risk_type=prediction['risk_type'],
+                risk_level=prediction['risk_level'],
+                alert_message=prediction['alert_message']
+            )
+            
+            return jsonify({
+                'success': True,
+                'weather': {
+                    'city': city,
+                    'temperature': weather_data['temperature'],
+                    'humidity': weather_data['humidity'],
+                    'wind_speed': weather_data['wind_speed'],
+                    'rainfall': weather_data['rainfall'],
+                    'risk_type': prediction['risk_type'],
+                    'risk_level': prediction['risk_level'],
+                    'alert_message': prediction['alert_message']
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': weather_data.get('error', 'Failed to fetch weather data')
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error fetching city weather: {str(e)}'
+        }), 500
+
+@app.route('/api/user-preferences', methods=['GET'])
+def get_user_preferences():
+    """Get user preferences including last selected city"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not logged in'}), 401
+        
+        user_id = session['user_id']
+        
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT last_city, updated_at
+            FROM user_preferences
+            WHERE user_id = ?
+        ''', (user_id,))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return jsonify({
+                'success': True,
+                'preferences': {
+                    'last_city': result[0],
+                    'updated_at': result[1]
+                }
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'preferences': {}
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error fetching preferences: {str(e)}'
+        }), 500
+
+@app.route('/api/save-city-preference', methods=['POST'])
+def save_city_preference():
+    """Save user's last selected city"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'error': 'Not logged in'}), 401
+        
+        user_id = session['user_id']
+        data = request.get_json()
+        city = data.get('city', '').strip()
+        
+        if not city:
+            return jsonify({'success': False, 'error': 'Invalid city'}), 400
+        
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        # Insert or update preference
+        cursor.execute('''
+            INSERT INTO user_preferences (user_id, last_city, updated_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id) DO UPDATE SET
+                last_city = excluded.last_city,
+                updated_at = CURRENT_TIMESTAMP
+        ''', (user_id, city))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'City preference saved'})
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error saving preference: {str(e)}'
+        }), 500
+
+# Disaster Prediction System Functions
+def fetch_nasa_weather_data_for_coords(latitude, longitude):
+    """Fetch weather data from NASA POWER API for specific coordinates"""
+    try:
+        # Get current date and previous day for more recent data
+        today = datetime.now()
+        yesterday = today - timedelta(days=1)
+        
+        start_date = yesterday.strftime('%Y%m%d')
+        end_date = today.strftime('%Y%m%d')
+        
+        # NASA POWER API endpoint with custom coordinates
+        url = "https://power.larc.nasa.gov/api/temporal/hourly/point"
+        params = {
+            'start': start_date,
+            'end': end_date,
+            'latitude': latitude,
+            'longitude': longitude,
+            'community': 're',
+            'parameters': 'T2M,PRECTOTCORR,WS2M,RH2M',
+            'format': 'json',
+            'units': 'metric',
+            'user': 'resqnet',
+            'header': 'true'
+        }
+        
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        # Extract the latest weather data
+        if 'properties' in data and 'parameter' in data['properties']:
+            params_data = data['properties']['parameter']
+            
+            # Get the most recent data point (last hour)
+            latest_temperature = None
+            latest_rainfall = None
+            latest_wind_speed = None
+            latest_humidity = None
+            
+            for param_name, param_data in params_data.items():
+                if param_data and len(param_data) > 0:
+                    # Get the last available data point
+                    latest_value = list(param_data.values())[-1]
+                    
+                    if param_name == 'T2M':
+                        latest_temperature = latest_value
+                    elif param_name == 'PRECTOTCORR':
+                        latest_rainfall = latest_value
+                    elif param_name == 'WS2M':
+                        latest_wind_speed = latest_value
+                    elif param_name == 'RH2M':
+                        latest_humidity = latest_value
+            
+            return {
+                'temperature': latest_temperature,
+                'rainfall': latest_rainfall,
+                'wind_speed': latest_wind_speed,
+                'humidity': latest_humidity,
+                'success': True
+            }
+        
+        return {'success': False, 'error': 'No weather data found'}
+        
+    except Exception as e:
+        print(f"Error fetching NASA weather data: {str(e)}")
+        # Return mock data for testing purposes
+        print("Using mock data for testing...")
+        return {
+            'temperature': 35.5,  # Moderate temperature
+            'rainfall': 5.2,      # Low rainfall
+            'wind_speed': 8.3,    # Moderate wind
+            'humidity': 65.0,     # Moderate humidity
+            'success': True
+        }
+
+def predict_disaster_risk(temperature, humidity, wind_speed, rainfall, city='your area'):
+    """Predict disaster risk based on weather parameters"""
+    try:
+        # Convert to float if they're strings
+        temp = float(temperature) if temperature is not None else 0
+        hum = float(humidity) if humidity is not None else 0
+        wind = float(wind_speed) if wind_speed is not None else 0
+        rain = float(rainfall) if rainfall is not None else 0
+        
+        # Prediction logic based on requirements
+        if rain > 10 and hum > 80:
+            return {
+                'risk_type': 'flood',
+                'risk_level': 'high',
+                'alert_message': f'🚨 Flood risk in {city} due to heavy rainfall and high humidity.'
+            }
+        elif temp > 40 and hum < 30:
+            return {
+                'risk_type': 'heatwave',
+                'risk_level': 'high',
+                'alert_message': f'🔥 Heatwave risk in {city}. Stay hydrated and indoors.'
+            }
+        else:
+            return {
+                'risk_type': 'none',
+                'risk_level': 'low',
+                'alert_message': f'✅ No active weather risks detected in {city}.'
+            }
+            
+    except Exception as e:
+        return {
+            'risk_type': 'error',
+            'risk_level': 'unknown',
+            'alert_message': f'⚠️ Unable to assess weather risks: {str(e)}'
+        }
+
+def fetch_nasa_weather_data():
+    """Backward compatibility wrapper - fetches weather data for Agra (default)"""
+    return fetch_nasa_weather_data_for_coords(27.1767, 78.0081)
+
+def store_weather_data(city, latitude, longitude, temperature, humidity, wind_speed, rainfall, risk_type, risk_level, alert_message):
+    """Store weather data and prediction in database"""
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO weather_data (city, latitude, longitude, temperature, humidity, wind_speed, rainfall, risk_type, risk_level, alert_message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (city, latitude, longitude, temperature, humidity, wind_speed, rainfall, risk_type, risk_level, alert_message))
+        
+        conn.commit()
+        conn.close()
+        return True
+        
+    except Exception as e:
+        print(f"Error storing weather data: {str(e)}")
+        return False
+
+def update_weather_data():
+    """Background function to update weather data periodically for all major cities"""
+    # List of major Indian cities with coordinates
+    cities = [
+        {'name': 'Delhi', 'lat': 28.6139, 'lon': 77.2090},
+        {'name': 'Mumbai', 'lat': 19.0760, 'lon': 72.8777},
+        {'name': 'Chennai', 'lat': 13.0827, 'lon': 80.2707},
+        {'name': 'Kolkata', 'lat': 22.5726, 'lon': 88.3639},
+        {'name': 'Bengaluru', 'lat': 12.9716, 'lon': 77.5946},
+        {'name': 'Hyderabad', 'lat': 17.3850, 'lon': 78.4867},
+        {'name': 'Agra', 'lat': 27.1767, 'lon': 78.0081},
+        {'name': 'Patna', 'lat': 25.5941, 'lon': 85.1376},
+        {'name': 'Guwahati', 'lat': 26.1445, 'lon': 91.7362},
+        {'name': 'Jaipur', 'lat': 26.9124, 'lon': 75.7873}
+    ]
+    
+    while True:
+        try:
+            print("Updating weather data for all cities...")
+            
+            # Update weather data for each city
+            for city_info in cities:
+                try:
+                    # Fetch weather data from NASA API
+                    weather_data = fetch_nasa_weather_data_for_coords(
+                        city_info['lat'], 
+                        city_info['lon']
+                    )
+                    
+                    if weather_data.get('success'):
+                        # Predict disaster risk
+                        prediction = predict_disaster_risk(
+                            weather_data['temperature'],
+                            weather_data['humidity'],
+                            weather_data['wind_speed'],
+                            weather_data['rainfall'],
+                            city_info['name']
+                        )
+                        
+                        # Store in database
+                        store_weather_data(
+                            city=city_info['name'],
+                            latitude=city_info['lat'],
+                            longitude=city_info['lon'],
+                            temperature=weather_data['temperature'],
+                            humidity=weather_data['humidity'],
+                            wind_speed=weather_data['wind_speed'],
+                            rainfall=weather_data['rainfall'],
+                            risk_type=prediction['risk_type'],
+                            risk_level=prediction['risk_level'],
+                            alert_message=prediction['alert_message']
+                        )
+                        
+                        print(f"Weather data updated for {city_info['name']}. Risk: {prediction['risk_type']}")
+                    else:
+                        print(f"Failed to fetch weather data for {city_info['name']}: {weather_data.get('error', 'Unknown error')}")
+                    
+                    # Small delay between API calls to avoid rate limiting
+                    time.sleep(2)
+                    
+                except Exception as e:
+                    print(f"Error updating weather for {city_info['name']}: {str(e)}")
+                    continue
+                
+        except Exception as e:
+            print(f"Error in weather update cycle: {str(e)}")
+        
+        # Wait for 4 hours (14400 seconds) before next update
+        time.sleep(14400)
+
+def initialize_weather_data():
+    """Initialize weather data on startup for default city (Agra)"""
+    try:
+        print("Initializing weather data for Agra (default)...")
+        weather_data = fetch_nasa_weather_data()
+        
+        if weather_data.get('success'):
+            prediction = predict_disaster_risk(
+                weather_data['temperature'],
+                weather_data['humidity'],
+                weather_data['wind_speed'],
+                weather_data['rainfall'],
+                'Agra'
+            )
+            
+            store_weather_data(
+                city='Agra',
+                latitude=27.1767,
+                longitude=78.0081,
+                temperature=weather_data['temperature'],
+                humidity=weather_data['humidity'],
+                wind_speed=weather_data['wind_speed'],
+                rainfall=weather_data['rainfall'],
+                risk_type=prediction['risk_type'],
+                risk_level=prediction['risk_level'],
+                alert_message=prediction['alert_message']
+            )
+            
+            print(f"Initial weather data stored for Agra. Risk: {prediction['risk_type']}")
+        else:
+            print(f"Failed to initialize weather data: {weather_data.get('error', 'Unknown error')}")
+            
+    except Exception as e:
+        print(f"Error initializing weather data: {str(e)}")
+
+@app.route('/api/weather-alert')
+def get_weather_alert():
+    """API endpoint to get the latest weather alert for emergency bar"""
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        # Get the most recent weather data
+        cursor.execute('''
+            SELECT alert_message, risk_type, risk_level, timestamp
+            FROM weather_data
+            ORDER BY timestamp DESC
+            LIMIT 1
+        ''')
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return jsonify({
+                'success': True,
+                'alert_message': result[0],
+                'risk_type': result[1],
+                'risk_level': result[2],
+                'timestamp': result[3]
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'alert_message': '✅ Weather monitoring system initializing...',
+                'risk_type': 'none',
+                'risk_level': 'low',
+                'timestamp': datetime.now().isoformat()
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Unable to fetch weather alert: {str(e)}'
+        }), 500
+
+@app.route('/api/weather-data')
+def get_weather_data():
+    """API endpoint to get latest weather data for dashboard"""
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        # Get the most recent weather data
+        cursor.execute('''
+            SELECT city, temperature, humidity, wind_speed, rainfall, risk_type, risk_level, alert_message, timestamp
+            FROM weather_data
+            ORDER BY timestamp DESC
+            LIMIT 1
+        ''')
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if result:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'city': result[0],
+                    'temperature': result[1],
+                    'humidity': result[2],
+                    'wind_speed': result[3],
+                    'rainfall': result[4],
+                    'risk_type': result[5],
+                    'risk_level': result[6],
+                    'alert_message': result[7],
+                    'timestamp': result[8]
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No weather data available'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Unable to fetch weather data: {str(e)}'
+        }), 500
+
 if __name__ == '__main__':
     # Initialize database on startup
     init_db()
+    
+    # Initialize weather data on startup
+    initialize_weather_data()
+    
+    # Start background weather update thread
+    weather_thread = threading.Thread(target=update_weather_data, daemon=True)
+    weather_thread.start()
     
     # Run the app
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6c5ce7">
     <title>{% block title %}ResQNet{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -13,31 +14,31 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="/" class="logo">ResQNet</a>
+            <a href="/" class="logo" id="navbar_logo" data-translate="navbar_logo">ResQNet</a>
             <ul class="nav-links">
-                <li><a href="/" class="{% if request.path == '/' %}active{% endif %}">Home</a></li>
-                <li><a href="/report" class="{% if request.path.startswith('/report') %}active{% endif %}">Report</a></li>
-                <li><a href="/donation" class="{% if request.path.startswith('/donation') %}active{% endif %}">Donation</a></li>
+                <li><a href="/" id="navbar_home" data-translate="navbar_home" class="{% if request.path == '/' %}active{% endif %}">Home</a></li>
+                <li><a href="/report" id="navbar_report" data-translate="navbar_report" class="{% if request.path.startswith('/report') %}active{% endif %}">Report</a></li>
+                <li><a href="/safe-route" id="navbar_safe_route" data-translate="navbar_safe_route" class="{% if request.path.startswith('/safe-route') %}active{% endif %}">Safe Route</a></li>
+                <li><a href="/donation" id="navbar_donation" data-translate="navbar_donation" class="{% if request.path.startswith('/donation') %}active{% endif %}">Donation</a></li>
                 {% if session.name %}
                     <li><a href="/logout">Logout ({{ session.name }})</a></li>
                 {% else %}
-                    <li><a href="/register" class="{% if request.path.startswith('/register') %}active{% endif %}">Register</a></li>
-                    <li><a href="/login" class="{% if request.path.startswith('/login') %}active{% endif %}">Login</a></li>
+                    <li><a href="/register" id="navbar_register" data-translate="navbar_register" class="{% if request.path.startswith('/register') %}active{% endif %}">Register</a></li>
+                    <li><a href="/login" id="navbar_login" data-translate="navbar_login" class="{% if request.path.startswith('/login') %}active{% endif %}">Login</a></li>
                 {% endif %}
-                <li><a href="/contact" class="{% if request.path.startswith('/contact') %}active{% endif %}">Contact Us</a></li>
+                <li><a href="/contact" id="navbar_contact" data-translate="navbar_contact" class="{% if request.path.startswith('/contact') %}active{% endif %}">Contact Us</a></li>
             </ul>
-            <button class="theme-toggle" onclick="toggleTheme()">
+            <button class="theme-toggle" id="theme-toggle">
                 <i class="fas fa-moon"></i>
             </button>
-            {% if not request.path.startswith('/register') %}
-                <div class="lang-switcher">
-                    <label for="language-select" class="lang-label">🌐</label>
-                    <select id="language-select" class="lang-select" onchange="changeLanguage(this.value)">
-                        <option value="en" {% if CURRENT_LANGUAGE == 'en' %}selected{% endif %}>English</option>
-                        <option value="hi" {% if CURRENT_LANGUAGE == 'hi' %}selected{% endif %}>हिंदी</option>
-                    </select>
-                </div>
-            {% endif %}
+            <div class="lang-switcher">
+                <label for="language-select" class="lang-label">🌐</label>
+                <select id="language-select" class="lang-select">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="mr">मराठी</option>
+                </select>
+            </div>
         </div>
     </nav>
 
@@ -64,10 +65,10 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-links">
-                <a href="/">Home</a>
-                <a href="/report">Report</a>
-                <a href="/donation">Donation</a>
-                <a href="/contact">Contact Us</a>
+                <a href="/" id="footer_home" data-translate="footer_home">Home</a>
+                <a href="/report" id="footer_report" data-translate="footer_report">Report</a>
+                <a href="/donation" id="footer_donation" data-translate="footer_donation">Donation</a>
+                <a href="/contact" id="footer_contact" data-translate="footer_contact">Contact Us</a>
             </div>
             <div class="social-icons">
                 <a href="#" class="social-icon" title="Facebook">
@@ -83,27 +84,13 @@
                     <i class="fab fa-instagram"></i>
                 </a>
             </div>
-            <div class="copyright">
+            <div class="copyright" id="footer_text" data-translate="footer_text">
                 © 2025 ResQNet. All rights reserved.
             </div>
         </div>
     </footer>
 
     <script>
-        // Theme toggle functionality
-        function toggleTheme() {
-            const body = document.body;
-            const themeToggle = document.querySelector('.theme-toggle i');
-            
-            if (body.classList.contains('dark-theme')) {
-                body.classList.remove('dark-theme');
-                themeToggle.className = 'fas fa-moon';
-            } else {
-                body.classList.add('dark-theme');
-                themeToggle.className = 'fas fa-sun';
-            }
-        }
-
         // Auto-hide flash messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
             const flashMessages = document.querySelectorAll('.flash-message');
@@ -118,11 +105,9 @@
                 }, 5000);
             });
         });
-
-        function changeLanguage(code) {
-            window.location.href = '/change-language/' + code;
-        }
     </script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/language.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

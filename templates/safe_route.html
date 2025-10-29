@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Safe Route - ResQNet{% endblock %}
+
+{% block extra_head %}
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.122/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<style>
+    .safe-route-container { max-width: 100%; margin: 0 auto; padding: 0; position: relative; }
+    .safe-route-header { padding: 16px 20px; }
+    .safe-route-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; padding: 0 20px; }
+    .safe-route-actions { display:flex; gap:12px; align-items:center; }
+    #cesiumContainer { width: 100%; height: 600px; }
+    .route-details { margin: 8px 20px; color: #374151; }
+    #controls { position:absolute; top:10px; left:10px; background:white; padding:10px; border-radius:8px; box-shadow: 0 2px 8px rgba(0,0,0,.15); z-index: 10; }
+    @media (max-width: 800px){ .safe-route-form{ grid-template-columns: 1fr; } }
+    .btn-small { padding: 4px 8px; font-size: .85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="safe-route-container">
+    <div class="safe-route-header">
+        <h1 id="safe_route_title">Safe Route / Evacuation</h1>
+        <p id="safe_route_subtitle">Find the safest route to shelters or hospitals using open data.</p>
+    </div>
+
+    <div class="form-card" style="position:relative;">
+        <div class="safe-route-form">
+            <div class="form-group">
+                <label for="origin" id="safe_route_origin_label">Current Location</label>
+                <input type="text" id="origin" placeholder="lat,lon (or use GPS)">
+            </div>
+            <div class="form-group">
+                <label for="mode_select" id="safe_route_mode_label">Find</label>
+                <select id="mode_select">
+                    <option value="shelter" id="mode_shelter">Nearest Shelter</option>
+                    <option value="hospital" id="mode_hospital">Nearest Hospital</option>
+                    <option value="custom" id="mode_custom">Custom Address</option>
+                </select>
+            </div>
+            <div class="form-group" id="custom_address_group" style="display:none;">
+                <label for="destination" id="safe_route_destination_label">Destination</label>
+                <input type="text" id="destination" placeholder="lat,lon">
+            </div>
+            <div class="safe-route-actions">
+                <button class="btn btn-secondary" id="use_my_location_btn">Use My Location</button>
+                <button class="btn btn-primary" id="find_route_btn">Find & Route</button>
+            </div>
+        </div>
+        <div id="controls"><button id="findNearest" class="btn btn-small">Find Nearest Shelter/Hospital</button></div>
+    </div>
+
+    <div id="cesiumContainer"></div>
+    <div class="route-details" id="route_details"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.122/Build/Cesium/Cesium.js"></script>
+<script>
+    const osrmBase = 'https://router.project-osrm.org/route/v1/driving/';
+    let viewer, routeEntity;
+    let candidateEntities = [];
+    const originInput = document.getElementById('origin');
+    const destinationInput = document.getElementById('destination');
+    const detailsDiv = document.getElementById('route_details');
+    const modeSelect = document.getElementById('mode_select');
+    const customAddressGroup = document.getElementById('custom_address_group');
+    let shelters = [];
+
+    function toRad(v){ return v * Math.PI / 180; }
+    function distanceKm(a, b){
+        const R = 6371;
+        const dLat = toRad(b.lat - a.lat);
+        const dLon = toRad(b.lon - a.lon);
+        const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
+        const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+        return 2 * R * Math.asin(Math.sqrt(h));
+    }
+    function decodeInputToCoords(text){
+        const m = String(text||'').trim().match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+        if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+        return null;
+    }
+
+    function initCesium(){
+        // Cesium.Ion.defaultAccessToken = 'YOUR_ACCESS_TOKEN_HERE';
+        viewer = new Cesium.Viewer('cesiumContainer', {
+            terrain: Cesium.Terrain.fromWorldTerrain(),
+            shouldAnimate: true
+        });
+        viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(78.9629, 20.5937, 3000000) });
+    }
+    function addBillboard(lat, lon, labelText, color='#e11d48'){
+        const entity = viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(lon, lat),
+            point: { pixelSize: 10, color: Cesium.Color.fromCssColorString(color) },
+            label: { text: labelText, font: '14px sans-serif', pixelOffset: new Cesium.Cartesian2(0, -20), fillColor: Cesium.Color.WHITE, outlineColor: Cesium.Color.BLACK, outlineWidth: 2 }
+        });
+        return entity;
+    }
+    function clearCandidateEntities(){
+        candidateEntities.forEach(e => viewer.entities.remove(e));
+        candidateEntities = [];
+    }
+
+    async function loadShelters(){
+        try { const res = await fetch('/get-shelters'); const data = await res.json(); shelters = data.shelters || []; } catch { shelters = []; }
+    }
+
+    async function drawRouteTo(lat, lon, name){
+        try {
+            if (routeEntity) { viewer.entities.remove(routeEntity); routeEntity = null; }
+            let o = decodeInputToCoords(originInput.value);
+            if (!o) throw new Error('Origin coordinates required');
+            const url = `${osrmBase}${o.lon},${o.lat};${lon},${lat}?overview=full&geometries=geojson`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (!data.routes || !data.routes.length) throw new Error('No route');
+            const route = data.routes[0];
+            const coords = route.geometry.coordinates; // [lon,lat]
+            const flat = [];
+            coords.forEach(c => { flat.push(c[0], c[1]); });
+            routeEntity = viewer.entities.add({
+                polyline: { positions: Cesium.Cartesian3.fromDegreesArray(flat), width: 5, material: Cesium.Color.LIME }
+            });
+            viewer.flyTo(routeEntity, { duration: 2.0 });
+            const km = (route.distance / 1000).toFixed(2);
+            const mins = Math.round(route.duration / 60);
+            detailsDiv.textContent = `Distance: ${km} km | Duration: ${mins} min${name ? ` | To: ${name}` : ''}`;
+        } catch (e) { detailsDiv.textContent = 'Unable to find route.'; }
+    }
+
+    async function useMyLocation(){
+        if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const lat = pos.coords.latitude; const lon = pos.coords.longitude;
+            originInput.value = `${lat}, ${lon}`;
+            addBillboard(lat, lon, 'You', '#2563eb');
+            viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(lon, lat, 250000) });
+        }, () => { alert('Unable to get location'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        initCesium();
+        await loadShelters();
+        document.getElementById('use_my_location_btn').addEventListener('click', (e)=>{ e.preventDefault(); useMyLocation(); });
+        document.getElementById('findNearest').addEventListener('click', async (e)=>{
+            e.preventDefault();
+            try {
+                await new Promise((resolve, reject)=>{
+                    if (!navigator.geolocation) return reject('Geolocation not supported');
+                    navigator.geolocation.getCurrentPosition(async (pos)=>{
+                        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+                        originInput.value = `${lat}, ${lon}`;
+                        addBillboard(lat, lon, 'You', '#2563eb');
+                        if (!shelters.length) throw new Error('No shelters');
+                        clearCandidateEntities();
+                        const withDist = shelters.map(s => ({ ...s, d: distanceKm({lat,lon},{lat:s.lat,lon:s.lon}) }))
+                            .sort((a,b)=>a.d-b.d);
+                        withDist.forEach(s => { const e = addBillboard(s.lat, s.lon, s.name); e._sr_meta = s; candidateEntities.push(e); });
+                        const nearest = withDist[0];
+                        await drawRouteTo(nearest.lat, nearest.lon, nearest.name);
+                        resolve();
+                    }, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                });
+            } catch { alert('Unable to get location or shelters.'); }
+        });
+        document.getElementById('find_route_btn').addEventListener('click', async (e)=>{
+            e.preventDefault();
+            try {
+                let o = decodeInputToCoords(originInput.value);
+                if (!o) throw new Error('Provide origin coordinates (lat,lon) or use My Location');
+                clearCandidateEntities();
+                const mode = modeSelect.value;
+                if (mode === 'custom') {
+                    const d = decodeInputToCoords(destinationInput.value);
+                    if (!d) throw new Error('Provide destination coordinates (lat,lon)');
+                    await drawRouteTo(d.lat, d.lon, destinationInput.value);
+                    return;
+                }
+                const withDist = shelters.map(s => ({ ...s, d: distanceKm({lat:o.lat,lon:o.lon},{lat:s.lat,lon:s.lon}) }))
+                    .filter(s => s.d <= 10).sort((a,b)=>a.d-b.d);
+                if (!withDist.length) throw new Error('No nearby results');
+                withDist.forEach((c) => { const e = addBillboard(c.lat, c.lon, c.name); e._sr_meta = c; candidateEntities.push(e); });
+                if (candidateEntities.length) viewer.flyTo(candidateEntities, { duration: 1.6 });
+                detailsDiv.textContent = `${withDist.length} nearby ${mode === 'hospital' ? 'hospitals' : 'shelters'} within 10 km. Tap a pin to route.`;
+            } catch (err) { detailsDiv.textContent = 'Unable to find a route. Please try again.'; }
+        });
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction(async (movement) => {
+            const picked = viewer.scene.pick(movement.position);
+            if (Cesium.defined(picked) && picked.id && picked.id._sr_meta) {
+                const meta = picked.id._sr_meta;
+                await drawRouteTo(meta.lat, meta.lon, meta.name);
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        modeSelect.addEventListener('change', ()=>{ customAddressGroup.style.display = (modeSelect.value === 'custom') ? '' : 'none'; });
+        customAddressGroup.style.display = (modeSelect.value === 'custom') ? '' : 'none';
+    });
+</script>
+{% endblock %}
+

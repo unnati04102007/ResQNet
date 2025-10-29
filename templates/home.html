@@ -3,22 +3,68 @@
 {% block title %}ResQNet - Home{% endblock %}
 
 {% block content %}
+<!-- Emergency Alert Bar -->
+<div id="alert-bar" class="alert-bar">
+    <div class="alert-content">
+        <span id="alert-text">Loading alerts...</span>
+    </div>
+</div>
+
+<!-- Weather Summary Bar -->
+<div class="weather-summary-bar" id="weather-summary-bar" style="display: none;">
+    <div class="weather-summary-content">
+        <span id="weather-city">📍 City: --</span>
+        <span id="weather-temp">🌡️ Temp: --°C</span>
+        <span id="weather-humidity">💧 Humidity: --%</span>
+        <span id="weather-rainfall">🌧️ Rainfall: --mm</span>
+        <span id="weather-wind">💨 Wind: --m/s</span>
+    </div>
+</div>
+
+<!-- City Selector Section -->
+<div class="city-selector-container">
+    <div class="city-selector-card">
+        <label for="city-select" class="city-label" id="city_selector_label" data-translate="city_selector_label">
+            <i class="fas fa-map-marker-alt"></i> Select City for Weather Alerts:
+        </label>
+        <div class="city-select-wrapper">
+            <select id="city-select" class="city-select">
+                <option value="">-- Choose a city --</option>
+                <option value="Delhi" data-lat="28.6139" data-lon="77.2090">Delhi</option>
+                <option value="Mumbai" data-lat="19.0760" data-lon="72.8777">Mumbai</option>
+                <option value="Chennai" data-lat="13.0827" data-lon="80.2707">Chennai</option>
+                <option value="Kolkata" data-lat="22.5726" data-lon="88.3639">Kolkata</option>
+                <option value="Bengaluru" data-lat="12.9716" data-lon="77.5946">Bengaluru</option>
+                <option value="Hyderabad" data-lat="17.3850" data-lon="78.4867">Hyderabad</option>
+                <option value="Agra" data-lat="27.1767" data-lon="78.0081">Agra</option>
+                <option value="Patna" data-lat="25.5941" data-lon="85.1376">Patna</option>
+                <option value="Guwahati" data-lat="26.1445" data-lon="91.7362">Guwahati</option>
+                <option value="Jaipur" data-lat="26.9124" data-lon="75.7873">Jaipur</option>
+            </select>
+            <button id="use-location-btn" class="btn btn-location" title="Use my current location">
+                <i class="fas fa-crosshairs"></i> <span id="use_location_text" data-translate="use_location_text">Use My Location</span>
+            </button>
+        </div>
+        <div id="location-status" class="location-status"></div>
+    </div>
+</div>
+
 <div class="container">
     <div class="header" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; text-align: center; padding: 40px 20px; border-radius: 12px;">
-        <h1>ResQNet</h1>
-        <p>Emergency Response & Donation Management System</p>
+        <h1 id="home_title" data-translate="home_title">ResQNet</h1>
+        <p id="home_subtitle" data-translate="home_subtitle">Emergency Response & Donation Management System</p>
     </div>
 
     <div class="content" style="padding: 40px 0;">
         <div class="donation-form" style="background: #f8f9fa; border-radius: 15px; padding: 30px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);">
-            <h2 class="form-title">About ResQNet</h2>
-            <p>ResQNet coordinates emergency response, enables secure donations, and provides tools for rapid, effective action during crises.</p>
-            <a href="/donation" class="btn btn-primary" style="margin-top: 10px;">Donate Now</a>
+            <h2 class="form-title" id="home_about_title" data-translate="home_about_title">About ResQNet</h2>
+            <p id="home_about_text" data-translate="home_about_text">ResQNet coordinates emergency response, enables secure donations, and provides tools for rapid, effective action during crises.</p>
+            <a href="/donation" class="btn btn-primary" id="home_donate_cta" data-translate="home_donate_cta" style="margin-top: 10px;">Donate Now</a>
         </div>
 
         <div class="donations-section" style="margin-top: 30px; display: grid; gap: 20px; grid-template-columns: 1fr 1fr;">
             <div class="incidents-card">
-                <h2>Contact Information</h2>
+                <h2 id="home_contact_info" data-translate="home_contact_info">Contact Information</h2>
                 <ul>
                     <li><i class="fas fa-globe"></i> Website: www.resqnet.org</li>
                     <li><i class="fas fa-envelope"></i> Email: info@resqnet.org</li>
@@ -27,16 +73,322 @@
                 </ul>
             </div>
             <div class="incidents-card">
-                <h2>Quick Contact</h2>
-                <p>Need immediate assistance? Contact us directly:</p>
+                <h2 id="home_quick_contact" data-translate="home_quick_contact">Quick Contact</h2>
+                <p id="home_quick_contact_text" data-translate="home_quick_contact_text">Need immediate assistance? Contact us directly:</p>
                 <ul>
                     <li><i class="fas fa-envelope"></i> support@resqnet.org</li>
                     <li><i class="fas fa-phone"></i> +1 (555) 987-6543</li>
                 </ul>
-                <a href="/contact" class="btn btn-secondary">Contact Us</a>
+                <a href="/contact" class="btn btn-secondary" id="home_contact_cta" data-translate="home_contact_cta">Contact Us</a>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// City Coordinates Database
+const CITIES = {
+    'Delhi': { lat: 28.6139, lon: 77.2090 },
+    'Mumbai': { lat: 19.0760, lon: 72.8777 },
+    'Chennai': { lat: 13.0827, lon: 80.2707 },
+    'Kolkata': { lat: 22.5726, lon: 88.3639 },
+    'Bengaluru': { lat: 12.9716, lon: 77.5946 },
+    'Hyderabad': { lat: 17.3850, lon: 78.4867 },
+    'Agra': { lat: 27.1767, lon: 78.0081 },
+    'Patna': { lat: 25.5941, lon: 85.1376 },
+    'Guwahati': { lat: 26.1445, lon: 91.7362 },
+    'Jaipur': { lat: 26.9124, lon: 75.7873 }
+};
+
+// Enhanced Emergency Alert Bar with Multi-City Support
+class EmergencyAlertBar {
+    constructor() {
+        this.alertBar = document.getElementById('alert-bar');
+        this.alertText = document.getElementById('alert-text');
+        this.citySelect = document.getElementById('city-select');
+        this.useLocationBtn = document.getElementById('use-location-btn');
+        this.locationStatus = document.getElementById('location-status');
+        this.weatherSummaryBar = document.getElementById('weather-summary-bar');
+        this.updateInterval = null;
+        this.selectedCity = null;
+        this.selectedCoords = null;
+        this.init();
+    }
+
+    init() {
+        // Load saved city preference if user is logged in
+        this.loadSavedCity();
+        
+        // Set up event listeners
+        this.citySelect.addEventListener('change', (e) => this.onCityChange(e));
+        this.useLocationBtn.addEventListener('click', () => this.useMyLocation());
+        
+        // Initial fetch
+        this.fetchAlerts();
+        
+        // Update alerts every 3 hours (10800000 ms) for weather + 30 seconds for reports
+        this.updateInterval = setInterval(() => {
+            this.fetchAlerts();
+        }, 30000);
+        
+        // Update weather alerts every 3 hours
+        setInterval(() => {
+            if (this.selectedCity && this.selectedCoords) {
+                this.fetchCityWeather(this.selectedCity, this.selectedCoords.lat, this.selectedCoords.lon);
+            }
+        }, 10800000); // 3 hours
+    }
+
+    async loadSavedCity() {
+        try {
+            const response = await fetch('/api/user-preferences');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.preferences && data.preferences.last_city) {
+                    const savedCity = data.preferences.last_city;
+                    this.citySelect.value = savedCity;
+                    this.onCityChange({ target: { value: savedCity } });
+                }
+            }
+        } catch (error) {
+            console.log('No saved city preference');
+        }
+    }
+
+    async onCityChange(e) {
+        const cityName = e.target.value;
+        
+        if (!cityName) {
+            this.selectedCity = null;
+            this.selectedCoords = null;
+            this.fetchAlerts();
+            return;
+        }
+        
+        const selectedOption = this.citySelect.options[this.citySelect.selectedIndex];
+        const lat = parseFloat(selectedOption.dataset.lat);
+        const lon = parseFloat(selectedOption.dataset.lon);
+        
+        this.selectedCity = cityName;
+        this.selectedCoords = { lat, lon };
+        
+        this.locationStatus.innerHTML = `<i class="fas fa-check-circle"></i> Monitoring weather for ${cityName}`;
+        this.locationStatus.className = 'location-status location-success';
+        
+        // Save city preference if logged in
+        this.saveCityPreference(cityName);
+        
+        // Fetch weather for selected city
+        await this.fetchCityWeather(cityName, lat, lon);
+        
+        // Refresh alerts
+        this.fetchAlerts();
+    }
+
+    async useMyLocation() {
+        if (!navigator.geolocation) {
+            this.locationStatus.innerHTML = '<i class="fas fa-times-circle"></i> Geolocation not supported';
+            this.locationStatus.className = 'location-status location-error';
+            return;
+        }
+        
+        this.locationStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting your location...';
+        this.locationStatus.className = 'location-status location-loading';
+        
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // Find nearest city
+                const nearestCity = this.findNearestCity(lat, lon);
+                
+                this.citySelect.value = nearestCity;
+                this.selectedCity = nearestCity;
+                this.selectedCoords = CITIES[nearestCity];
+                
+                this.locationStatus.innerHTML = `<i class="fas fa-map-marker-alt"></i> Using your location (nearest: ${nearestCity})`;
+                this.locationStatus.className = 'location-status location-success';
+                
+                // Fetch weather for user's location
+                await this.fetchCityWeather(nearestCity, this.selectedCoords.lat, this.selectedCoords.lon);
+                this.fetchAlerts();
+            },
+            (error) => {
+                this.locationStatus.innerHTML = '<i class="fas fa-times-circle"></i> Location access denied';
+                this.locationStatus.className = 'location-status location-error';
+                console.error('Geolocation error:', error);
+            }
+        );
+    }
+
+    findNearestCity(lat, lon) {
+        let nearestCity = 'Delhi';
+        let minDistance = Infinity;
+        
+        for (const [city, coords] of Object.entries(CITIES)) {
+            const distance = Math.sqrt(
+                Math.pow(coords.lat - lat, 2) + Math.pow(coords.lon - lon, 2)
+            );
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestCity = city;
+            }
+        }
+        
+        return nearestCity;
+    }
+
+    async saveCityPreference(city) {
+        try {
+            await fetch('/api/save-city-preference', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ city })
+            });
+        } catch (error) {
+            console.log('Could not save city preference');
+        }
+    }
+
+    async fetchCityWeather(city, lat, lon) {
+        try {
+            const response = await fetch('/api/fetch-city-weather', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ city, latitude: lat, longitude: lon })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    this.updateWeatherSummary(data.weather);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching city weather:', error);
+        }
+    }
+
+    updateWeatherSummary(weather) {
+        document.getElementById('weather-city').textContent = `📍 City: ${weather.city}`;
+        document.getElementById('weather-temp').textContent = `🌡️ Temp: ${weather.temperature ? weather.temperature.toFixed(1) : '--'}°C`;
+        document.getElementById('weather-humidity').textContent = `💧 Humidity: ${weather.humidity ? weather.humidity.toFixed(0) : '--'}%`;
+        document.getElementById('weather-rainfall').textContent = `🌧️ Rainfall: ${weather.rainfall ? weather.rainfall.toFixed(1) : '--'}mm`;
+        document.getElementById('weather-wind').textContent = `💨 Wind: ${weather.wind_speed ? weather.wind_speed.toFixed(1) : '--'}m/s`;
+        
+        this.weatherSummaryBar.style.display = 'block';
+    }
+
+    async fetchAlerts() {
+        try {
+            // Fetch disaster reports
+            const reportsResponse = await fetch('/get_alerts');
+            const reportsData = await reportsResponse.json();
+            
+            // Fetch weather alert for selected city or most recent
+            let weatherEndpoint = '/get_weather_alerts';
+            if (this.selectedCity) {
+                weatherEndpoint += `?city=${encodeURIComponent(this.selectedCity)}`;
+            }
+            
+            const weatherResponse = await fetch(weatherEndpoint);
+            const weatherData = await weatherResponse.json();
+            
+            // Combine alerts from both sources
+            const allAlerts = [];
+            
+            // Add weather alert if available and has risk
+            if (weatherData.success && weatherData.weather_alert) {
+                const weatherAlert = weatherData.weather_alert;
+                if (weatherAlert.risk_type !== 'none' && weatherAlert.risk_level !== 'low') {
+                    allAlerts.push({
+                        type: 'weather',
+                        message: weatherAlert.message,
+                        priority: weatherAlert.risk_level === 'high' ? 1 : 2
+                    });
+                }
+            }
+            
+            // Add disaster reports
+            if (reportsData.alerts && reportsData.alerts.length > 0) {
+                reportsData.alerts.forEach(alert => {
+                    allAlerts.push({
+                        type: 'disaster',
+                        message: `⚠️ ${alert.disaster_type.charAt(0).toUpperCase() + alert.disaster_type.slice(1)} in ${alert.location}`,
+                        priority: 2
+                    });
+                });
+            }
+            
+            if (allAlerts.length > 0) {
+                // Sort by priority (weather alerts first if high risk)
+                allAlerts.sort((a, b) => a.priority - b.priority);
+                this.displayAlerts(allAlerts);
+            } else {
+                this.displayNoAlerts();
+            }
+        } catch (error) {
+            console.error('Error fetching alerts:', error);
+            this.displayError();
+        }
+    }
+
+    displayAlerts(alerts) {
+        const alertMessages = alerts.map(alert => alert.message);
+        this.alertText.textContent = alertMessages.join(' | ');
+        
+        // Set appropriate CSS class based on alert type
+        if (alerts.some(alert => alert.type === 'weather' && alert.priority === 1)) {
+            this.alertBar.className = 'alert-bar alert-weather-high';
+        } else {
+            this.alertBar.className = 'alert-bar alert-active';
+        }
+        
+        this.startScrolling();
+    }
+
+    displayNoAlerts() {
+        const cityText = this.selectedCity ? ` in ${this.selectedCity}` : '';
+        this.alertText.textContent = `✅ No active weather risks detected${cityText}.`;
+        this.alertBar.className = 'alert-bar alert-safe';
+        this.stopScrolling();
+    }
+
+    displayError() {
+        this.alertText.textContent = '⚠️ Unable to load alerts. Please refresh the page.';
+        this.alertBar.className = 'alert-bar alert-error';
+        this.stopScrolling();
+    }
+
+    startScrolling() {
+        const content = document.querySelector('.alert-content');
+        content.style.animation = 'scroll-left 30s linear infinite';
+    }
+
+    stopScrolling() {
+        const content = document.querySelector('.alert-content');
+        content.style.animation = 'none';
+    }
+
+    destroy() {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+    }
+}
+
+// Initialize the alert bar when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.emergencyAlertBar = new EmergencyAlertBar();
+});
+
+// Clean up when leaving the page
+window.addEventListener('beforeunload', () => {
+    if (window.emergencyAlertBar) {
+        window.emergencyAlertBar.destroy();
+    }
+});
+</script>
 {% endblock %}
 

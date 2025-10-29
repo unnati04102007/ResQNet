@@ -1,3 +1,54 @@
+/* CSS Variables for Theme System */
+:root {
+    /* Light Theme (Default) */
+    --bg-color: #f8f9fa;
+    --text-color: #333;
+    --text-secondary: #666;
+    --primary-color: #6c5ce7;
+    --primary-hover: #5f3dc4;
+    --card-bg: #ffffff;
+    --card-border: #e9ecef;
+    --navbar-bg: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #fd79a8 100%);
+    --navbar-text: #ffffff;
+    --footer-bg: #2c3e50;
+    --footer-text: #ecf0f1;
+    --button-bg: #6c5ce7;
+    --button-text: #ffffff;
+    --button-hover: #5f3dc4;
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+    --input-focus: #6c5ce7;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.15);
+    --border-radius: 8px;
+    --transition: all 0.3s ease;
+}
+
+[data-theme="dark"] {
+    /* Dark Theme */
+    --bg-color: #121212;
+    --text-color: #e1e1e1;
+    --text-secondary: #b0b0b0;
+    --primary-color: #bb86fc;
+    --primary-hover: #985eff;
+    --card-bg: #1e1e1e;
+    --card-border: #333;
+    --navbar-bg: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #404040 100%);
+    --navbar-text: #ffffff;
+    --footer-bg: #0d1117;
+    --footer-text: #c9d1d9;
+    --button-bg: #bb86fc;
+    --button-text: #ffffff;
+    --button-hover: #985eff;
+    --input-bg: #2d2d2d;
+    --input-border: #404040;
+    --input-focus: #bb86fc;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --border-radius: 8px;
+    --transition: all 0.3s ease;
+}
+
 /* Base Styles */
 * {
     margin: 0;
@@ -8,21 +59,295 @@
 body {
     font-family: 'Poppins', sans-serif;
     line-height: 1.6;
-    color: #333;
-    background-color: #f8f9fa;
+    color: var(--text-color);
+    background-color: var(--bg-color);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: var(--transition);
+}
+
+/* Emergency Alert Bar */
+.alert-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    background: #dc3545;
+    color: white;
+    padding: 8px 0;
+    overflow: hidden;
+    font-weight: 500;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    transition: all 0.3s ease;
+}
+
+.alert-bar.alert-active {
+    background: #dc3545;
+    animation: pulse-red 2s infinite;
+}
+
+.alert-bar.alert-safe {
+    background: #28a745;
+    animation: none;
+}
+
+.alert-bar.alert-error {
+    background: #ffc107;
+    color: #212529;
+    animation: pulse-yellow 2s infinite;
+}
+
+.alert-bar.alert-weather-high {
+    background: linear-gradient(45deg, #ff6b35, #f7931e);
+    animation: pulse-orange 2s infinite;
+}
+
+.alert-content {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    width: max-content;
+    min-width: 100%;
+}
+
+@keyframes scroll-left {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+@keyframes pulse-red {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(220, 53, 69, 0.5);
+    }
+}
+
+@keyframes pulse-yellow {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(255, 193, 7, 0.5);
+    }
+}
+
+@keyframes pulse-orange {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(255, 107, 53, 0.5);
+    }
+}
+
+/* Weather Summary Bar */
+.weather-summary-bar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 0;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    font-size: 0.9rem;
+}
+
+.weather-summary-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    padding: 0 20px;
+}
+
+.weather-summary-content span {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* City Selector Container */
+.city-selector-container {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.city-selector-card {
+    max-width: 900px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 20px 30px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .city-selector-card {
+    background: rgba(30, 30, 30, 0.95);
+}
+
+.city-label {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 12px;
+}
+
+.city-label i {
+    color: #f5576c;
+}
+
+.city-select-wrapper {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.city-select {
+    flex: 1;
+    min-width: 250px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    border: 2px solid var(--input-border);
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.city-select:focus {
+    border-color: #f5576c;
+    box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.1);
+}
+
+.city-select:hover {
+    border-color: #f093fb;
+}
+
+.btn-location {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-location:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #6a3e94 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-location:active {
+    transform: translateY(0);
+}
+
+.btn-location i {
+    font-size: 1.1rem;
+}
+
+/* Location Status */
+.location-status {
+    margin-top: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.location-status.location-success {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.location-status.location-error {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.location-status.location-loading {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+    border: 1px solid rgba(0, 123, 255, 0.3);
+}
+
+[data-theme="dark"] .location-status.location-success {
+    background: rgba(40, 167, 69, 0.2);
+    color: #5cd85a;
+}
+
+[data-theme="dark"] .location-status.location-error {
+    background: rgba(220, 53, 69, 0.2);
+    color: #ff6b6b;
+}
+
+[data-theme="dark"] .location-status.location-loading {
+    background: rgba(0, 123, 255, 0.2);
+    color: #4da3ff;
+}
+
+/* Responsive Design for City Selector */
+@media (max-width: 768px) {
+    .city-selector-card {
+        padding: 15px 20px;
+    }
+    
+    .city-select-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .city-select,
+    .btn-location {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .weather-summary-content {
+        gap: 15px;
+        font-size: 0.8rem;
+    }
 }
 
 /* Navbar */
 .navbar {
-    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #fd79a8 100%);
+    background: var(--navbar-bg);
     padding: 1rem 0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 999;
+    transition: var(--transition);
 }
 
 .nav-container {
@@ -37,8 +362,9 @@ body {
 .logo {
     font-size: 1.8rem;
     font-weight: 700;
-    color: white;
+    color: var(--navbar-text);
     text-decoration: none;
+    transition: var(--transition);
 }
 
 .nav-links {
@@ -48,14 +374,15 @@ body {
 }
 
 .nav-links a {
-    color: white;
+    color: var(--navbar-text);
     text-decoration: none;
     font-weight: 500;
-    transition: color 0.3s ease;
+    transition: var(--transition);
 }
 
 .nav-links a:hover {
     color: #fdcb6e;
+    opacity: 0.8;
 }
 
 .nav-links a.active {
@@ -68,15 +395,26 @@ body {
 .theme-toggle {
     background: rgba(255, 255, 255, 0.2);
     border: none;
-    color: white;
+    color: var(--navbar-text);
     padding: 0.5rem;
     border-radius: 50%;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: var(--transition);
+    font-size: 1.2rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .theme-toggle:hover {
     background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.theme-toggle i {
+    transition: var(--transition);
 }
 
 .lang-switcher {
@@ -251,14 +589,16 @@ body {
 }
 
 .form-card, .incidents-card {
-    background: white;
-    border-radius: 15px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius);
     padding: 2rem;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow);
+    transition: var(--transition);
 }
 
 .form-card h2, .incidents-card h2 {
-    color: #2d3436;
+    color: var(--text-color);
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
 }
@@ -266,9 +606,10 @@ body {
 .login-prompt {
     text-align: center;
     padding: 2rem;
-    background: #f8f9fa;
+    background: var(--card-bg);
     border-radius: 10px;
-    border: 2px dashed #dee2e6;
+    border: 2px dashed var(--card-border);
+    transition: var(--transition);
 }
 
 .login-prompt p {
@@ -292,7 +633,7 @@ body {
 .form-group label {
     display: block;
     font-weight: 500;
-    color: #555;
+    color: var(--text-color);
     margin-bottom: 0.5rem;
     font-size: 0.95rem;
 }
@@ -302,23 +643,25 @@ body {
 .form-group textarea {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid #e1e5e9;
-    border-radius: 8px;
+    border: 2px solid var(--input-border);
+    border-radius: var(--border-radius);
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
-    transition: border-color 0.3s ease;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    transition: var(--transition);
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #6c5ce7;
+    border-color: var(--input-focus);
     box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
 }
 
 .form-group small {
-    color: #636e72;
+    color: var(--text-secondary);
     font-size: 0.8rem;
     margin-top: 0.25rem;
     display: block;
@@ -362,24 +705,25 @@ body {
     display: inline-block;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     font-size: 1rem;
     font-weight: 500;
     text-decoration: none;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     font-family: 'Poppins', sans-serif;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-    color: white;
+    background: var(--button-bg);
+    color: var(--button-text);
 }
 
 .btn-primary:hover {
+    background: var(--button-hover);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+    box-shadow: var(--shadow-hover);
 }
 
 .btn-secondary {
@@ -621,10 +965,11 @@ body {
 
 /* Footer */
 .footer {
-    background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
-    color: white;
+    background: var(--footer-bg);
+    color: var(--footer-text);
     padding: 2rem 0;
     margin-top: auto;
+    transition: var(--transition);
 }
 
 .footer-content {
@@ -643,13 +988,14 @@ body {
 }
 
 .footer-links a {
-    color: white;
+    color: var(--footer-text);
     text-decoration: none;
-    transition: color 0.3s ease;
+    transition: var(--transition);
 }
 
 .footer-links a:hover {
     color: #fdcb6e;
+    opacity: 0.8;
 }
 
 .social-icons {
@@ -684,6 +1030,15 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .alert-bar {
+        font-size: 0.8rem;
+        padding: 6px 0;
+    }
+    
+    .alert-content {
+        padding: 0 15px;
+    }
+
     .nav-container {
         flex-direction: column;
         gap: 1rem;

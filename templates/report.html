@@ -5,55 +5,54 @@
 {% block content %}
 <div class="report-container">
     <div class="report-header">
-        <h1>Report Emergency Incident</h1>
-        <p>Help your community by reporting emergency situations and disasters</p>
+        <h1 id="report_title" data-translate="report_title">Report Emergency Incident</h1>
+        <p id="report_subtitle" data-translate="report_subtitle">Help your community by reporting emergency situations and disasters</p>
     </div>
     
     <div class="report-content">
-        <!-- Report Form (Left Side) -->
-        <div class="report-form-section">
-            <div class="form-card">
-                <h2>Submit New Report</h2>
-                {% if not session.name %}
-                    <div class="login-prompt">
-                        <p><i class="fas fa-info-circle"></i> You must be logged in to submit a report.</p>
-                        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-                        <a href="{{ url_for('register') }}" class="btn btn-secondary">Register</a>
-                    </div>
-                {% else %}
+        {% if session.get('user_id') %}
+        <div style="margin-bottom: 16px;">
+            <button id="open-report-modal" class="btn btn-primary">Open Report Form</button>
+        </div>
+        <!-- Modal for Report Form -->
+        <div id="reportModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="modal-close" id="closeReportModal">&times;</span>
+                <div class="form-card">
+                    <h2 id="report_form_title" data-translate="report_form_title">Submit New Report</h2>
                     <form method="POST" enctype="multipart/form-data" class="report-form">
                         <div class="form-group">
-                            <label for="name">Your Name (Optional)</label>
+                            <label for="name" id="report_name_label" data-translate="report_name_label">Your Name (Optional)</label>
                             <input type="text" id="name" name="name" placeholder="Enter your name">
                         </div>
                         
                         <div class="form-group">
-                            <label for="email">Email Address *</label>
+                            <label for="email" id="report_email_label" data-translate="report_email_label">Email Address *</label>
                             <input type="email" id="email" name="email" required placeholder="your.email@example.com">
                         </div>
                         
                         <div class="form-group">
-                            <label for="location">Location *</label>
+                            <label for="location" id="report_location_label" data-translate="report_location_label">Location *</label>
                             <input type="text" id="location" name="location" required placeholder="City, State/Province, Country">
                         </div>
                         
                         <div class="form-group">
-                            <label for="disaster_type">Disaster Type *</label>
+                            <label for="disaster_type" id="report_disaster_label" data-translate="report_disaster_label">Disaster Type *</label>
                             <select id="disaster_type" name="disaster_type" required>
-                                <option value="">Select disaster type</option>
-                                <option value="Flood">Flood</option>
-                                <option value="Earthquake">Earthquake</option>
-                                <option value="Other">Other</option>
+                                <option value="" id="report_disaster_placeholder" data-translate="report_disaster_placeholder">Select disaster type</option>
+                                <option value="Flood" id="report_disaster_flood" data-translate="report_disaster_flood">Flood</option>
+                                <option value="Earthquake" id="report_disaster_earthquake" data-translate="report_disaster_earthquake">Earthquake</option>
+                                <option value="Other" id="report_disaster_other" data-translate="report_disaster_other">Other</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
-                            <label for="description">Description *</label>
+                            <label for="description" id="report_description_label" data-translate="report_description_label">Description *</label>
                             <textarea id="description" name="description" required rows="4" placeholder="Describe the incident in detail..."></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label for="image">Upload Image (Optional)</label>
+                            <label for="image" id="report_image_label">Upload Image (Optional)</label>
                             <div class="file-upload">
                                 <input type="file" id="image" name="image" accept="image/*">
                                 <label for="image" class="file-upload-label">
@@ -61,23 +60,30 @@
                                     <span id="file-name">Choose file or drag here</span>
                                 </label>
                             </div>
-                            <small>Only images allowed (PNG, JPG, JPEG, GIF)</small>
+                            <small id="report_image_hint">Only images allowed (PNG, JPG, JPEG, GIF)</small>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary btn-large">Submit Report</button>
+                        <button type="submit" class="btn btn-primary btn-large" id="report_submit_btn">Submit Report</button>
                     </form>
-                {% endif %}
+                </div>
             </div>
         </div>
+        {% else %}
+        <div class="login-prompt">
+            <p id="report_login_required"><i class="fas fa-info-circle"></i> You must be logged in to submit a report.</p>
+            <a href="{{ url_for('login', next=url_for('report', openModal=1)) }}" class="btn btn-primary" id="report_login_btn">Login</a>
+            <a href="{{ url_for('register') }}" class="btn btn-secondary" id="report_register_btn">Register</a>
+        </div>
+        {% endif %}
         
         <!-- Incidents List (Right Side) -->
         <div class="incidents-section">
             <div class="incidents-card">
                 <div class="incidents-header">
-                    <h2>Recent Incidents</h2>
+                    <h2 id="recent_incidents">Recent Incidents</h2>
                     <div class="incidents-controls">
                         <button onclick="refreshIncidents()" class="btn btn-secondary btn-small">
-                            <i class="fas fa-sync-alt"></i> Refresh
+                            <i class="fas fa-sync-alt"></i> <span id="incidents_refresh">Refresh</span>
                         </button>
                     </div>
                 </div>
@@ -85,23 +91,23 @@
                 <!-- Filter Bar -->
                 <div class="filter-bar">
                     <div class="filter-group">
-                        <label for="disaster-filter">Disaster Type:</label>
+                        <label for="disaster-filter" id="filter_disaster_label">Disaster Type:</label>
                         <select id="disaster-filter" onchange="filterIncidents()">
-                            <option value="">All Types</option>
-                            <option value="Flood">Flood</option>
-                            <option value="Earthquake">Earthquake</option>
-                            <option value="Other">Other</option>
+                            <option value="" id="filter_disaster_all">All Types</option>
+                            <option value="Flood" id="filter_disaster_flood">Flood</option>
+                            <option value="Earthquake" id="filter_disaster_earthquake">Earthquake</option>
+                            <option value="Other" id="filter_disaster_other">Other</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label for="location-filter">Location:</label>
+                        <label for="location-filter" id="filter_location_label">Location:</label>
                         <input type="text" id="location-filter" placeholder="Search location..." onkeyup="filterIncidents()">
                     </div>
                 </div>
                 
                 <!-- Incidents List -->
-                <div id="incidents-list" class="incidents-list">
-                    <div class="loading">Loading incidents...</div>
+                    <div id="incidents-list" class="incidents-list">
+                    <div class="loading" id="incidents_loading">Loading incidents...</div>
                 </div>
             </div>
         </div>
@@ -111,6 +117,21 @@
 
 {% block scripts %}
 <script>
+    // Modal behavior
+    (function(){
+        const modal = document.getElementById('reportModal');
+        const openBtn = document.getElementById('open-report-modal');
+        const closeBtn = document.getElementById('closeReportModal');
+        function openModal(){ if(modal) modal.style.display = 'block'; }
+        function closeModal(){ if(modal) modal.style.display = 'none'; }
+        if (openBtn) openBtn.addEventListener('click', openModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', function(e){ if(e.target === modal){ closeModal(); }});
+        {% if open_modal %}
+        openModal();
+        {% endif %}
+    })();
+
     async function loadIncidents() {
         const incidentsList = document.getElementById('incidents-list');
         const disasterFilter = document.getElementById('disaster-filter').value;
@@ -150,4 +171,5 @@
     document.addEventListener('DOMContentLoaded', loadIncidents);
 </script>
 {% endblock %}
+
 

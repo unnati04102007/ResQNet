@@ -17,45 +17,43 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="#home" class="logo">ResQNet</a>
+            <a href="#home" class="logo" id="navbar_logo">ResQNet</a>
             <ul class="nav-links">
-                <li><a href="#home" class="active">Home</a></li>
-                <li><a href="#report">Report</a></li>
-                <li><a href="#donation">Donation</a></li>
+                <li><a href="#home" class="active" id="navbar_home">Home</a></li>
+                <li><a href="#report" id="navbar_report">Report</a></li>
+                <li><a href="#donation" id="navbar_donation">Donation</a></li>
                 {% if session.name %}
                     <li><a href="/logout">Logout ({{ session.name }})</a></li>
                 {% else %}
-                    <li><a href="#register">Register</a></li>
-                    <li><a href="#login">Login</a></li>
+                    <li><a href="#register" id="navbar_register">Register</a></li>
+                    <li><a href="#login" id="navbar_login">Login</a></li>
                 {% endif %}
-                <li><a href="#contact">Contact Us</a></li>
+                <li><a href="#contact" id="navbar_contact">Contact Us</a></li>
             </ul>
             <button class="theme-toggle" onclick="toggleTheme()">
                 <i class="fas fa-moon"></i>
             </button>
-            {% if not request.path.startswith('/register') %}
-                <div class="lang-switcher">
-                    <label for="language-select" class="lang-label">🌐</label>
-                    <select id="language-select" class="lang-select" onchange="changeLanguage(this.value)">
-                        <option value="en" {% if session.get('language','en') == 'en' %}selected{% endif %}>English</option>
-                        <option value="hi" {% if session.get('language','en') == 'hi' %}selected{% endif %}>हिंदी</option>
-                    </select>
-                </div>
-            {% endif %}
+            <div class="lang-switcher">
+                <label for="language-select" class="lang-label">🌐</label>
+                <select id="language-select" class="lang-select">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                </select>
+            </div>
         </div>
     </nav>
 
     <!-- Home -->
     <section id="home" class="container-narrow">
         <div class="report-header">
-            <h1>ResQNet</h1>
-            <p>Emergency Response & Donation Management System</p>
+            <h1 id="home_title">ResQNet</h1>
+            <p id="home_subtitle">Emergency Response & Donation Management System</p>
         </div>
         <div class="spacer"></div>
         <div class="card">
-            <h2>About ResQNet</h2>
-            <p>Coordinate emergency response, manage donations and empower communities.</p>
-            <a href="#donation" class="btn">Make a Donation</a>
+            <h2 id="home_about_title">About ResQNet</h2>
+            <p id="home_about_text">Coordinate emergency response, manage donations and empower communities.</p>
+            <a href="#donation" class="btn" id="home_donate_cta">Make a Donation</a>
         </div>
     </section>
 
@@ -63,20 +61,20 @@
     <section id="donation" class="container-narrow">
         <div class="spacer"></div>
         <div class="donation-form form-card">
-            <h2 class="form-title">Make a Donation</h2>
+            <h2 class="form-title" id="donation_title">Make a Donation</h2>
             <div id="message"></div>
             <form id="donationForm">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="donor_name">Full Name *</label>
+                        <label for="donor_name" id="donor_name_label">Full Name *</label>
                         <input type="text" id="donor_name" name="donor_name" required>
                     </div>
                     <div class="form-group">
-                        <label for="donor_email">Email Address *</label>
+                        <label for="donor_email" id="donor_email_label">Email Address *</label>
                         <input type="email" id="donor_email" name="donor_email" required>
                     </div>
                     <div class="form-group">
-                        <label for="amount">Amount *</label>
+                        <label for="amount" id="amount_label">Amount *</label>
                         <div class="amount-buttons">
                             <div class="amount-btn" data-amount="25">$25</div>
                             <div class="amount-btn" data-amount="50">$50</div>
@@ -88,7 +86,7 @@
                         <input type="number" id="amount" name="amount" min="1" step="0.01" required placeholder="Enter custom amount">
                     </div>
                     <div class="form-group">
-                        <label for="currency">Currency</label>
+                        <label for="currency" id="currency_label">Currency</label>
                         <select id="currency" name="currency">
                             <option value="USD">USD - US Dollar</option>
                             <option value="EUR">EUR - Euro</option>
@@ -98,11 +96,11 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="purpose">Purpose (Optional)</label>
+                    <label for="purpose" id="purpose_label">Purpose (Optional)</label>
                     <textarea id="purpose" name="purpose" rows="3" placeholder="How would you like your donation to be used?"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Choose Payment Method *</label>
+                    <label id="payment_method_label">Choose Payment Method *</label>
                     <div class="payment-modes" id="paymentModes">
                         <div class="payment-tile" data-method="GPay" tabindex="0" role="button" aria-label="GPay"><span class="payment-logo">🅶</span><span>GPay</span></div>
                         <div class="payment-tile" data-method="PayPal" tabindex="0" role="button" aria-label="PayPal"><span class="payment-logo">Ⓟ</span><span>PayPal</span></div>
@@ -124,9 +122,9 @@
         </div>
 
         <div class="incidents-card" style="margin-top:20px;">
-            <div class="recent-header"><h2>Recent Donations</h2><span class="recent-small">Showing latest 5</span></div>
+            <div class="recent-header"><h2 id="recent_donations">Recent Donations</h2><span class="recent-small" id="recent_donations_small">Showing latest 5</span></div>
             <div id="donationsList" class="donations-list">
-                <div class="loading">Loading donations...</div>
+                <div class="loading" id="donations_loading">Loading donations...</div>
             </div>
         </div>
     </section>
@@ -135,8 +133,8 @@
     <section id="contact" class="container-narrow">
         <div class="spacer"></div>
         <div class="incidents-card">
-            <h2>ResQNet Customer Support</h2>
-            <p>Our team is here to help you out. You can get in touch with us via phone.</p>
+            <h2 id="support_title">ResQNet Customer Support</h2>
+            <p id="support_text">Our team is here to help you out. You can get in touch with us via phone.</p>
             <div class="contact-info">
                 <p><strong>Phone:</strong> 1800 266 6282</p>
                 <p><strong>Address:</strong><br>Olympus A, Hiranandani Estate,<br>Ghodbunder Road, Patlipada,<br>Thane West - 400607, Maharashtra.</p>
@@ -148,14 +146,14 @@
     <section id="register" class="container-narrow">
         <div class="spacer"></div>
         <div class="auth-card">
-            <div class="auth-header"><h1>Register</h1><p>Create your account</p></div>
+            <div class="auth-header"><h1 id="register_title">Register</h1><p id="register_subtitle">Create your account</p></div>
             <form method="POST" action="/register" class="auth-form">
-                <div class="form-group"><label for="name">Name *</label><input type="text" id="name" name="name" required></div>
-                <div class="form-group"><label for="email">Email *</label><input type="email" id="email" name="email" required></div>
-                <div class="form-group"><label for="password">Password *</label><input type="password" id="password" name="password" required minlength="6"></div>
-                <div class="form-group"><label for="confirm_password">Confirm Password *</label><input type="password" id="confirm_password" name="confirm_password" required minlength="6"></div>
-                <div class="form-group"><label for="preferred_language">Select Language</label><select id="preferred_language" name="preferred_language"><option value="en">English</option><option value="hi">हिंदी</option></select></div>
-                <button type="submit" class="btn btn-primary">Create Account</button>
+                <div class="form-group"><label for="name" id="register_name_label">Name *</label><input type="text" id="name" name="name" required></div>
+                <div class="form-group"><label for="email" id="register_email_label">Email *</label><input type="email" id="email" name="email" required></div>
+                <div class="form-group"><label for="password" id="register_password_label">Password *</label><input type="password" id="password" name="password" required minlength="6"></div>
+                <div class="form-group"><label for="confirm_password" id="register_confirm_password_label">Confirm Password *</label><input type="password" id="confirm_password" name="confirm_password" required minlength="6"></div>
+                <div class="form-group"><label for="preferred_language" id="register_preferred_language_label">Select Language</label><select id="preferred_language" name="preferred_language"><option value="en">English</option><option value="hi">हिंदी</option></select></div>
+                <button type="submit" class="btn btn-primary" id="register_submit_btn">Create Account</button>
             </form>
         </div>
     </section>
@@ -163,11 +161,11 @@
     <section id="login" class="container-narrow">
         <div class="spacer"></div>
         <div class="auth-card">
-            <div class="auth-header"><h1>Login</h1><p>Access your account</p></div>
+            <div class="auth-header"><h1 id="login_title">Login</h1><p id="login_subtitle">Access your account</p></div>
             <form method="POST" action="/login" class="auth-form">
-                <div class="form-group"><label for="login_email">Email *</label><input type="email" id="login_email" name="email" required></div>
-                <div class="form-group"><label for="login_password">Password *</label><input type="password" id="login_password" name="password" required></div>
-                <button type="submit" class="btn btn-primary">Login</button>
+                <div class="form-group"><label for="login_email" id="login_email_label">Email *</label><input type="email" id="login_email" name="email" required></div>
+                <div class="form-group"><label for="login_password" id="login_password_label">Password *</label><input type="password" id="login_password" name="password" required></div>
+                <button type="submit" class="btn btn-primary" id="login_submit_btn">Login</button>
             </form>
         </div>
     </section>
@@ -176,10 +174,10 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-links">
-                <a href="#home">Home</a>
-                <a href="#report">Report</a>
-                <a href="#donation">Donation</a>
-                <a href="#contact">Contact Us</a>
+                <a href="#home" id="footer_home">Home</a>
+                <a href="#report" id="footer_report">Report</a>
+                <a href="#donation" id="footer_donation">Donation</a>
+                <a href="#contact" id="footer_contact">Contact Us</a>
             </div>
             <div class="social-icons">
                 <a href="#" class="social-icon" title="Facebook"><i class="fab fa-facebook-f"></i></a>
@@ -187,7 +185,7 @@
                 <a href="#" class="social-icon" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
                 <a href="#" class="social-icon" title="Instagram"><i class="fab fa-instagram"></i></a>
             </div>
-            <div class="copyright">© 2025 ResQNet. All rights reserved.</div>
+            <div class="copyright" id="footer_text">© 2025 ResQNet. All rights reserved.</div>
         </div>
     </footer>
 
@@ -197,7 +195,7 @@
             if (body.classList.contains('dark-theme')) { body.classList.remove('dark-theme'); icon.className='fas fa-moon'; }
             else { body.classList.add('dark-theme'); icon.className='fas fa-sun'; }
         }
-        function changeLanguage(code) { window.location.href = '/change-language/' + code; }
+        // language.js handles language switching
 
         // Donation logic (reused)
         document.querySelectorAll('.amount-btn').forEach(btn => {
@@ -265,5 +263,6 @@
             a.addEventListener('click', (e)=>{ e.preventDefault(); const id=a.getAttribute('href'); const t=document.querySelector(id); if(t){ t.scrollIntoView({behavior:'smooth'});} document.querySelectorAll('.nav-links a').forEach(x=>x.classList.remove('active')); a.classList.add('active'); });
         });
     </script>
+    <script src="{{ url_for('static', filename='js/language.js') }}"></script>
 </body>
 </html>
