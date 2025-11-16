@@ -419,7 +419,7 @@ def get_alerts():
     
     conn.close()
     return jsonify({'alerts': reports})
-
+   
 @app.route('/get_weather_alerts')
 def get_weather_alerts():
     """API endpoint to get weather alerts for emergency alert bar (supports city filtering)"""
